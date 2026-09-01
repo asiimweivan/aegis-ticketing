@@ -1,0 +1,32 @@
+﻿# Environment secrets - NEVER commit
+.env
+**/.env
+*.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+
+# ML models (regenerated at runtime)
+backend/app/ml/saved_models/*
+!backend/app/ml/saved_models/.gitkeep
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
