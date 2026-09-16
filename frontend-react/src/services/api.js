@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8001/api/v1';
+﻿const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001/api/v1';
 
 const getToken = () => localStorage.getItem('access_token');
 
@@ -28,7 +28,7 @@ export const auth = {
   register: (data) => apiFetch('/auth/register', {
     method: 'POST', body: JSON.stringify(data)
   }),
-  // ── Forgot password / reset flow (2-step OTP verification) ──
+  // â”€â”€ Forgot password / reset flow (2-step OTP verification) â”€â”€
   forgotPassword: (email) => apiFetch('/auth/forgot-password', {
     method: 'POST', body: JSON.stringify({ email })
   }),
@@ -67,7 +67,7 @@ export const users = {
 };
 
 export const notifications = {
-  // NOTE: trailing slash added before the query string — the backend route is
+  // NOTE: trailing slash added before the query string â€” the backend route is
   // registered as /notifications/, so calling it without the slash triggered
   // a 307 redirect on every poll (and risked the Authorization header being
   // dropped on some clients during that redirect).
@@ -106,13 +106,13 @@ export const helpers = {
   },
   categoryLabel: (cat) => {
     const map = {
-      technical: '💻 Technical',
-      administrative: '📋 Administrative',
-      billing: '💳 Billing',
-      infrastructure: '🏗️ Infrastructure',
-      hr: '👥 HR',
-      security: '🔒 Security',
-      general: '📌 General',
+      technical: 'ðŸ’» Technical',
+      administrative: 'ðŸ“‹ Administrative',
+      billing: 'ðŸ’³ Billing',
+      infrastructure: 'ðŸ—ï¸ Infrastructure',
+      hr: 'ðŸ‘¥ HR',
+      security: 'ðŸ”’ Security',
+      general: 'ðŸ“Œ General',
     };
     return map[cat] || cat;
   },
@@ -131,3 +131,5 @@ export const helpers = {
     hour: '2-digit', minute: '2-digit',
   }),
 };
+// build marker: force-rebuild-20260916234310
+
