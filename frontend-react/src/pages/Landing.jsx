@@ -94,7 +94,7 @@ function Counter({ target, suffix = '', duration = 2000 }) {
 }
 
 const FEATURES = [
-  { n: '01', icon: 'brain', title: 'AI Classification', desc: 'NLP + ML classifies every ticket by category, priority & SLA in under 100ms — automatically, no human needed.' },
+  { n: '01', icon: 'brain', title: 'AI Classification', desc: 'NLP + ML classifies every ticket by category and priority in under 100ms, then applies your configured SLA rules automatically — no human needed.' },
   { n: '02', icon: 'zap', title: 'Instant Routing', desc: 'The right team receives the ticket before anyone has read it. Zero manual triage, zero delay.' },
   { n: '03', icon: 'bar-chart', title: 'Analytics & Reports', desc: 'Generate and download detailed reports — per user, per team, per period. Full visibility at every level.' },
   { n: '04', icon: 'bell', title: 'Live Status Updates', desc: 'Real-time notifications keep clients informed at every stage. No more chasing emails.' },
@@ -215,7 +215,7 @@ export default function Landing() {
           </h1>
 
           <p style={{ fontSize: '1.05rem', color: '#64748B', lineHeight: 1.8, marginBottom: '2.5rem', maxWidth: 480 }}>
-            Submit a ticket and AEGIS AI classifies it, sets priority, calculates SLA, and routes it to the right team — automatically, before anyone even reads it.
+            Submit a ticket and AEGIS AI classifies it, sets priority, applies the matching SLA rule, and routes it to the right team — automatically, before anyone even reads it.
           </p>
 
           <div className="hero-btns" style={{ display: 'flex', gap: '0.85rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
@@ -535,5 +535,6 @@ export default function Landing() {
     </>
   )
 }
+
 
 
