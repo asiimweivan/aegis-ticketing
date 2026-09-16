@@ -1,7 +1,7 @@
-import random
+﻿import random
 import string
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -15,13 +15,15 @@ from app.core.security import (
     create_access_token, create_refresh_token, decode_token,
     get_current_user
 )
+from app.core.limiter import limiter
 from app.services.email_service import send_otp_email
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserOut, status_code=201)
-def register(user_in: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db)):
     if user_in.role != UserRole.CLIENT:
         raise HTTPException(
             status_code=403,
@@ -48,7 +50,8 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(credentials: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == credentials.email).first()
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
@@ -70,7 +73,8 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=Token)
-def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def refresh_token(request: Request, refresh_token: str, db: Session = Depends(get_db)):
     payload = decode_token(refresh_token)
     if payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -98,17 +102,18 @@ def logout(current_user: User = Depends(get_current_user)):
     return MessageResponse(message="Logged out successfully")
 
 
-# ── Password Reset (2-step OTP verification) ──
+# -- Password Reset (2-step OTP verification) --
 
 def _generate_otp() -> str:
     return "".join(random.choices(string.digits, k=6))
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user:
-        # Don't reveal whether the email exists — respond the same either way
+        # Don't reveal whether the email exists -- respond the same either way
         return MessageResponse(message="If that email exists, a reset code has been sent.")
 
     # Invalidate any previous unused codes for this email
@@ -132,7 +137,8 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
 
 
 @router.post("/verify-otp", response_model=MessageResponse)
-def verify_otp(payload: VerifyOTPRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def verify_otp(request: Request, payload: VerifyOTPRequest, db: Session = Depends(get_db)):
     otp_entry = db.query(PasswordResetOTP).filter(
         PasswordResetOTP.email == payload.email,
         PasswordResetOTP.code == payload.code,
@@ -149,7 +155,8 @@ def verify_otp(payload: VerifyOTPRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def reset_password(request: Request, payload: ResetPasswordRequest, db: Session = Depends(get_db)):
     otp_entry = db.query(PasswordResetOTP).filter(
         PasswordResetOTP.email == payload.email,
         PasswordResetOTP.code == payload.code,
