@@ -356,9 +356,9 @@ export default function Landing() {
             <div>
               <div style={{ display: 'inline-block', background: '#FFF5F2', border: '1px solid #FED7C8', borderRadius: 100, padding: '0.3rem 1rem', fontSize: '0.75rem', fontWeight: 600, color: '#E8450A', marginBottom: '1.25rem' }}>AI Engine</div>
               <h2 style={{ fontFamily: 'Plus Jakarta Sans,sans-serif', fontSize: 'clamp(1.7rem,3vw,2.2rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '1rem', lineHeight: 1.2 }}>Learns from every ticket you close</h2>
-              <p style={{ color: '#64748B', lineHeight: 1.8, marginBottom: '1.75rem', fontSize: '0.95rem' }}>TF-IDF vectorization + Logistic Regression, trained on your data. Rule-based on day one, full ML after 20 resolved tickets. Improves automatically — no retraining needed.</p>
+              <p style={{ color: '#64748B', lineHeight: 1.8, marginBottom: '1.75rem', fontSize: '0.95rem' }}>TF-IDF vectorization + Logistic Regression, trained on your data. Rule-based on day one, full ML after 20 resolved tickets. Retrains on demand as your admin reviews resolved tickets — accuracy improves with each retrain.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[['target','Under 100ms','Category, priority, SLA & tags set instantly'],['refresh','Self-improving','Retrains on your closed tickets automatically'],['repeat','Pattern detection','Spots recurring issues across departments'],['file-text','Report generation','Full reports per user, team, and period']].map(([ic,t,d]) => (
+                {[['target','Under 100ms','Category, priority, SLA & tags set instantly'],['refresh','Admin-triggered retraining','Retrains on demand from resolved tickets'],['repeat','Pattern detection','Spots recurring issues across departments'],['file-text','Report generation','Full reports per user, team, and period']].map(([ic,t,d]) => (
                   <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.85rem 1rem', background: '#FFFFFF', border: '1.5px solid #F1F5F9', borderRadius: 12, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
                     onMouseOver={e => { e.currentTarget.style.borderColor = '#FED7C8'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(232,69,10,0.08)' }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = '#F1F5F9'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)' }}
@@ -535,3 +535,5 @@ export default function Landing() {
     </>
   )
 }
+
+
