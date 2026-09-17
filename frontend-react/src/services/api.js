@@ -7,7 +7,7 @@ export const apiFetch = async (endpoint, options = {}) => {
   const token = getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers, credentials: 'include' });
 
   if (res.status === 401) {
     localStorage.clear();
@@ -28,7 +28,11 @@ export const auth = {
   register: (data) => apiFetch('/auth/register', {
     method: 'POST', body: JSON.stringify(data)
   }),
-  // â”€â”€ Forgot password / reset flow (2-step OTP verification) â”€â”€
+  // Refresh token now lives in an httpOnly cookie set by the backend —
+  // this call sends no body, the cookie goes automatically via credentials: 'include'.
+  refresh: () => apiFetch('/auth/refresh', { method: 'POST' }),
+  logout: () => apiFetch('/auth/logout', { method: 'POST' }),
+  // -- Forgot password / reset flow (2-step OTP verification) --
   forgotPassword: (email) => apiFetch('/auth/forgot-password', {
     method: 'POST', body: JSON.stringify({ email })
   }),
@@ -67,10 +71,6 @@ export const users = {
 };
 
 export const notifications = {
-  // NOTE: trailing slash added before the query string â€” the backend route is
-  // registered as /notifications/, so calling it without the slash triggered
-  // a 307 redirect on every poll (and risked the Authorization header being
-  // dropped on some clients during that redirect).
   list: (unreadOnly = false) => apiFetch(`/notifications/?unread_only=${unreadOnly}`),
   unreadCount: () => apiFetch('/notifications/unread-count'),
   markRead: (id) => apiFetch(`/notifications/${id}/read`, { method: 'PATCH' }),
@@ -106,13 +106,13 @@ export const helpers = {
   },
   categoryLabel: (cat) => {
     const map = {
-      technical: 'ðŸ’» Technical',
-      administrative: 'ðŸ“‹ Administrative',
-      billing: 'ðŸ’³ Billing',
-      infrastructure: 'ðŸ—ï¸ Infrastructure',
-      hr: 'ðŸ‘¥ HR',
-      security: 'ðŸ”’ Security',
-      general: 'ðŸ“Œ General',
+      technical: 'Technical',
+      administrative: 'Administrative',
+      billing: 'Billing',
+      infrastructure: 'Infrastructure',
+      hr: 'HR',
+      security: 'Security',
+      general: 'General',
     };
     return map[cat] || cat;
   },
@@ -131,5 +131,3 @@ export const helpers = {
     hour: '2-digit', minute: '2-digit',
   }),
 };
-// build marker: force-rebuild-20260916234310
-

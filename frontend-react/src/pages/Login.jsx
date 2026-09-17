@@ -51,7 +51,7 @@ export default function Login() {
     try {
       const data = await auth.login(email, password)
       if (data) {
-        login(data.user, data.access_token, data.refresh_token)
+        login(data.user, data.access_token)
         if (data.user.role === 'admin') navigate('/admin')
         else if (data.user.role === 'staff') navigate('/staff')
         else navigate('/client')
@@ -272,3 +272,4 @@ export default function Login() {
     </>
   )
 }
+

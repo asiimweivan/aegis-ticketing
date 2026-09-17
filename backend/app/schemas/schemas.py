@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, field_validator
+﻿from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List, Any
 from datetime import datetime
 from app.models.models import UserRole, TicketStatus, TicketPriority, TicketCategory, NotificationType
@@ -6,7 +6,6 @@ from app.models.models import UserRole, TicketStatus, TicketPriority, TicketCate
 
 class Token(BaseModel):
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
     user: "UserOut"
 

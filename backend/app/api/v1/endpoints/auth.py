@@ -1,7 +1,7 @@
 ﻿import random
 import string
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -19,6 +19,30 @@ from app.core.limiter import limiter
 from app.services.email_service import send_otp_email
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+REFRESH_COOKIE_NAME = "refresh_token"
+REFRESH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7  # 7 days, matches REFRESH_TOKEN_EXPIRE_DAYS
+
+
+def _set_refresh_cookie(response: Response, token: str):
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=REFRESH_COOKIE_MAX_AGE_SECONDS,
+        path="/api/v1/auth",
+    )
+
+
+def _clear_refresh_cookie(response: Response):
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        path="/api/v1/auth",
+        samesite="none",
+        secure=True,
+    )
 
 
 @router.post("/register", response_model=UserOut, status_code=201)
@@ -51,7 +75,7 @@ def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db
 
 @router.post("/login", response_model=Token)
 @limiter.limit("5/minute")
-def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
+def login(request: Request, response: Response, credentials: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == credentials.email).first()
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
@@ -65,17 +89,23 @@ def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db
     db.commit()
 
     token_data = {"sub": str(user.id), "role": user.role.value}
+    refresh = create_refresh_token(token_data)
+    _set_refresh_cookie(response, refresh)
+
     return Token(
         access_token=create_access_token(token_data),
-        refresh_token=create_refresh_token(token_data),
         user=user
     )
 
 
 @router.post("/refresh", response_model=Token)
 @limiter.limit("10/minute")
-def refresh_token(request: Request, refresh_token: str, db: Session = Depends(get_db)):
-    payload = decode_token(refresh_token)
+def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
+    token = request.cookies.get(REFRESH_COOKIE_NAME)
+    if not token:
+        raise HTTPException(status_code=401, detail="No refresh token provided")
+
+    payload = decode_token(token)
     if payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -85,9 +115,11 @@ def refresh_token(request: Request, refresh_token: str, db: Session = Depends(ge
         raise HTTPException(status_code=401, detail="User not found")
 
     token_data = {"sub": str(user.id), "role": user.role.value}
+    new_refresh = create_refresh_token(token_data)
+    _set_refresh_cookie(response, new_refresh)
+
     return Token(
         access_token=create_access_token(token_data),
-        refresh_token=create_refresh_token(token_data),
         user=user
     )
 
@@ -98,7 +130,8 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/logout", response_model=MessageResponse)
-def logout(current_user: User = Depends(get_current_user)):
+def logout(response: Response, current_user: User = Depends(get_current_user)):
+    _clear_refresh_cookie(response)
     return MessageResponse(message="Logged out successfully")
 
 
@@ -113,10 +146,8 @@ def _generate_otp() -> str:
 def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user:
-        # Don't reveal whether the email exists -- respond the same either way
         return MessageResponse(message="If that email exists, a reset code has been sent.")
 
-    # Invalidate any previous unused codes for this email
     db.query(PasswordResetOTP).filter(
         PasswordResetOTP.email == payload.email,
         PasswordResetOTP.used == False
