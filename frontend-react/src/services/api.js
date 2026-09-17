@@ -1,4 +1,4 @@
-﻿const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1';
+﻿const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001/api/v1';
 
 const getToken = () => localStorage.getItem('access_token');
 
@@ -131,4 +131,5 @@ export const helpers = {
     hour: '2-digit', minute: '2-digit',
   }),
 };
+
 
