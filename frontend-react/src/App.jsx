@@ -19,6 +19,7 @@ import ClientTicketDetail from './pages/client/TicketDetail'
 import StaffDashboard from './pages/staff/Dashboard'
 import StaffTickets from './pages/staff/Tickets'
 import StaffTicketDetail from './pages/staff/TicketDetail'
+import ClientProfile from './pages/staff/ClientProfile'
 
 // Admin
 import AdminDashboard from './pages/admin/Dashboard'
@@ -96,6 +97,11 @@ export default function App() {
           <StaffTicketDetail />
         </ProtectedRoute>
       } />
+        <Route path="/staff/clients/:id" element={
+          <ProtectedRoute roles={['staff', 'admin']}>
+            <ClientProfile />
+          </ProtectedRoute>
+        } />
 
       {/* Admin */}
       <Route path="/admin" element={

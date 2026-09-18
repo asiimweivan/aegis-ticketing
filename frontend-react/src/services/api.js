@@ -63,9 +63,10 @@ export const tickets = {
 export const users = {
   list: (params = {}) => {
     const q = new URLSearchParams(params).toString();
-    return apiFetch(`/users?${q}`);
+    return apiFetch(`/users/?${q}`);
   },
   create: (data) => apiFetch('/users', { method: 'POST', body: JSON.stringify(data) }),
+  get: (id) => apiFetch('/users/' + id),
   update: (id, data) => apiFetch(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deactivate: (id) => apiFetch(`/users/${id}`, { method: 'DELETE' }),
 };

@@ -450,7 +450,7 @@ export default function StaffTicketDetail() {
               <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>ðŸ“‹ Ticket Info</div>
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {[
-                  { label: 'Submitted by', value: ticket.client?.full_name || 'â€”' },
+                  { label: 'Submitted by', value: ticket.client ? (<Link to={'/staff/clients/' + ticket.client.id} style={{ color: '#818CF8', textDecoration: 'none', fontWeight: 600 }}>{ticket.client.full_name}</Link>) : '-' },
                   { label: 'Submitted', value: helpers.formatDate(ticket.created_at) },
                   { label: 'SLA deadline', value: ticket.due_date ? helpers.formatDate(ticket.due_date) : 'Not set' },
                   { label: 'SLA hours', value: ticket.sla_hours ? `${ticket.sla_hours}h` : 'â€”' },
