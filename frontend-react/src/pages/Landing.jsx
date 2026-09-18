@@ -185,6 +185,7 @@ export default function Landing() {
           {[['#features','Features'],['#how','How it works'],['#ai','AI Engine'],['#portals','Portals']].map(([h,l]) => (
             <a key={h} href={h} className="nav-link">{l}</a>
           ))}
+          <Link to="/knowledge-base" className="nav-link">Knowledge Base</Link>
         </div>
 
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
@@ -535,6 +536,7 @@ export default function Landing() {
     </>
   )
 }
+
 
 
 
