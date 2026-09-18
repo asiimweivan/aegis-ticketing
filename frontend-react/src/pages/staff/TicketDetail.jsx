@@ -7,6 +7,78 @@ import { tickets, users, helpers } from '../../services/api'
 import { useToast } from '../../components/ui/Toast'
 import useAuthStore from '../../stores/authStore'
 
+const RESPONSE_TEMPLATES = {
+  technical: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thanks for reporting this technical issue. I have reviewed ticket ' + t.ticket_number + ' and we are looking into it now.',
+    '',
+    'In the meantime, could you confirm:',
+    '- When did this start happening?',
+    '- Is it affecting one device or multiple?',
+    '- Have you tried restarting the affected system?',
+    '',
+    'We will keep you updated as we work through it.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+  administrative: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thank you for your request (ticket ' + t.ticket_number + '). We have received it and it is now with the relevant team for processing.',
+    '',
+    'We will follow up once it has been reviewed.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+  billing: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thanks for reaching out about ticket ' + t.ticket_number + '. We are reviewing the billing details you have provided and will get back to you shortly with an update.',
+    '',
+    'If you have any invoice numbers or transaction references handy, feel free to share them here to help us resolve this faster.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+  infrastructure: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thanks for flagging this facilities or infrastructure issue (ticket ' + t.ticket_number + '). We have logged it and a team member will assess it shortly.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+  hr: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thank you for reaching out regarding ticket ' + t.ticket_number + '. This has been passed to the HR team for review, and someone will follow up with you directly.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+  security: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thanks for reporting this security concern (ticket ' + t.ticket_number + '). We are treating this with priority and reviewing it now.',
+    '',
+    'As a precaution, please avoid sharing any further sensitive details in this thread until we confirm the issue is contained.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+  general: (t) => [
+    'Hi ' + (t.client?.full_name || 'there') + ',',
+    '',
+    'Thanks for your message (ticket ' + t.ticket_number + '). We have received it and will follow up shortly.',
+    '',
+    'Best,',
+    'AEG Support Team',
+  ].join(String.fromCharCode(10)),
+}
+
 export default function StaffTicketDetail() {
   const { id } = useParams()
   const { user } = useAuthStore()
@@ -256,6 +328,15 @@ export default function StaffTicketDetail() {
 
                 {/* Comment form */}
                 <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '1rem' }}>
+                    {ticket && RESPONSE_TEMPLATES[ticket.category] && (
+                      <button
+                        type="button"
+                        onClick={() => setComment(RESPONSE_TEMPLATES[ticket.category](ticket))}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.75rem', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, color: '#A5B4FC', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', marginBottom: '0.6rem', fontFamily: 'Inter,sans-serif' }}
+                      >
+                        Insert suggested response
+                      </button>
+                    )}
                   <textarea
                     value={comment} onChange={e => setComment(e.target.value)}
                     placeholder="Add a comment or internal note..."
@@ -409,6 +490,7 @@ export default function StaffTicketDetail() {
     </DashboardLayout>
   )
 }
+
 
 
 
