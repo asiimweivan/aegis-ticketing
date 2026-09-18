@@ -239,4 +239,45 @@ class ResetPasswordRequest(BaseModel):
         return v
 
 
+class KnowledgeBaseCreate(BaseModel):
+    title: str
+    problem_description: str
+    solution: str
+    category: TicketCategory
+    tags: Optional[List[str]] = None
+
+
+class KnowledgeBaseUpdate(BaseModel):
+    title: Optional[str] = None
+    problem_description: Optional[str] = None
+    solution: Optional[str] = None
+    category: Optional[TicketCategory] = None
+    tags: Optional[List[str]] = None
+
+
+class KnowledgeBaseOut(BaseModel):
+    id: int
+    title: str
+    problem_description: str
+    solution: str
+    category: TicketCategory
+    tags: Optional[List[str]] = None
+    views: int
+    helpful_count: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class KnowledgeBaseListOut(BaseModel):
+    articles: List[KnowledgeBaseOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 Token.model_rebuild()
+
