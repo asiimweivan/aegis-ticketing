@@ -84,6 +84,18 @@ export const analytics = {
   retrainML: () => apiFetch('/analytics/retrain-ml', { method: 'POST' }),
 };
 
+export const kb = {
+  list: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiFetch(`/kb/?${q}`);
+  },
+  get: (id) => apiFetch(`/kb/${id}`),
+  create: (data) => apiFetch('/kb/', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => apiFetch(`/kb/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id) => apiFetch(`/kb/${id}`, { method: 'DELETE' }),
+  markHelpful: (id) => apiFetch(`/kb/${id}/helpful`, { method: 'POST' }),
+};
+
 export const helpers = {
   statusBadge: (status) => {
     const map = {
@@ -131,5 +143,8 @@ export const helpers = {
     hour: '2-digit', minute: '2-digit',
   }),
 };
+
+
+
 
 

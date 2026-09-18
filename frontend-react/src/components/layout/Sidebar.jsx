@@ -1,23 +1,52 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+﻿import { NavLink, useNavigate } from 'react-router-dom'
 import useAuthStore from '../../stores/authStore'
+
+function Icon({ name, size = 18, strokeWidth = 1.8 }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  switch (name) {
+    case 'home':
+      return <svg {...common}><path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v10h14V10" /></svg>
+    case 'ticket':
+      return <svg {...common}><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" /><path d="M10 6.5v11" strokeDasharray="2 2" /></svg>
+    case 'plus':
+      return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>
+    case 'bookmark':
+      return <svg {...common}><path d="M6 4h12v16l-6-4-6 4Z" /></svg>
+    case 'users':
+      return <svg {...common}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c0-3.6 2.5-6 5.5-6s5.5 2.4 5.5 6" /><path d="M16 8.5a3 3 0 1 1 0-5.9" /><path d="M14.5 14.3c2.7.3 4.5 2.6 4.5 5.7" /></svg>
+    case 'bar-chart':
+      return <svg {...common}><path d="M3 20h18" /><rect x="6" y="10" width="3" height="8" rx="0.5" /><rect x="11" y="6" width="3" height="12" rx="0.5" /><rect x="16" y="13" width="3" height="5" rx="0.5" /></svg>
+    case 'file-text':
+      return <svg {...common}><path d="M8 3h6l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /><path d="M9.5 13h5M9.5 16.5h5" /></svg>
+    case 'book-open':
+      return <svg {...common}><path d="M12 6.5c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5Z" /><path d="M12 6.5v13" /></svg>
+    case 'log-out':
+      return <svg {...common}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+    default:
+      return null
+  }
+}
 
 const navItems = {
   client: [
-    { to: '/client', icon: '🏠', label: 'Dashboard', exact: true },
-    { to: '/client/tickets', icon: '🎫', label: 'My Tickets' },
-    { to: '/client/new-ticket', icon: '➕', label: 'New Ticket' },
+    { to: '/client', icon: 'home', label: 'Dashboard', exact: true },
+    { to: '/client/tickets', icon: 'ticket', label: 'My Tickets' },
+    { to: '/client/new-ticket', icon: 'plus', label: 'New Ticket' },
+    { to: '/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
   ],
   staff: [
-    { to: '/staff', icon: '🏠', label: 'Dashboard', exact: true },
-    { to: '/staff/tickets', icon: '🎫', label: 'All Tickets' },
-    { to: '/staff/tickets?assigned=me', icon: '📌', label: 'My Queue' },
+    { to: '/staff', icon: 'home', label: 'Dashboard', exact: true },
+    { to: '/staff/tickets', icon: 'ticket', label: 'All Tickets' },
+    { to: '/staff/tickets?assigned=me', icon: 'bookmark', label: 'My Queue' },
+    { to: '/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
   ],
   admin: [
-    { to: '/admin', icon: '🏠', label: 'Dashboard', exact: true },
-    { to: '/admin/tickets', icon: '🎫', label: 'All Tickets' },
-    { to: '/admin/users', icon: '👥', label: 'Users' },
-    { to: '/admin/analytics', icon: '📊', label: 'Analytics' },
-    { to: '/admin/reports', icon: '📄', label: 'Reports' }
+    { to: '/admin', icon: 'home', label: 'Dashboard', exact: true },
+    { to: '/admin/tickets', icon: 'ticket', label: 'All Tickets' },
+    { to: '/admin/users', icon: 'users', label: 'Users' },
+    { to: '/admin/analytics', icon: 'bar-chart', label: 'Analytics' },
+    { to: '/admin/reports', icon: 'file-text', label: 'Reports' },
+    { to: '/admin/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
   ],
 }
 
@@ -115,7 +144,7 @@ export default function Sidebar({ unreadCount = 0 }) {
               transition: 'all 0.2s',
             })}
           >
-            <span style={{ fontSize: '1rem', width: 20, textAlign: 'center' }}>{item.icon}</span>
+            <span style={{ width: 20, display: 'flex', justifyContent: 'center' }}><Icon name={item.icon} size={16} /></span>
             {item.label}
             {item.label === 'My Tickets' && unreadCount > 0 && (
               <span style={{
@@ -141,7 +170,7 @@ export default function Sidebar({ unreadCount = 0 }) {
           onMouseOver={e => e.currentTarget.style.color = '#F43F5E'}
           onMouseOut={e => e.currentTarget.style.color = '#8B9BB4'}
         >
-          <span>🚪</span> Sign out
+          <Icon name="log-out" size={16} /> Sign out
         </button>
       </div>
     </aside>

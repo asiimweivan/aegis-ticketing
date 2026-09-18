@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+﻿import { Routes, Route, Navigate } from 'react-router-dom'
 import useAuthStore from './stores/authStore'
 
 // Pages
@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import KnowledgeBase from './pages/KnowledgeBase'
 
 // Client
 import ClientDashboard from './pages/client/Dashboard'
@@ -25,6 +26,7 @@ import AdminTickets from './pages/admin/Tickets'
 import AdminUsers from './pages/admin/Users'
 import AdminAnalytics from './pages/admin/Analytics'
 import AdminReports from './pages/admin/Reports'
+import AdminKnowledgeBase from './pages/admin/KnowledgeBase'
 
 // Protected route wrapper
 const ProtectedRoute = ({ children, roles }) => {
@@ -54,6 +56,7 @@ export default function App() {
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
       <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+      <Route path="/knowledge-base" element={<KnowledgeBase />} />
 
       {/* Client */}
       <Route path="/client" element={
@@ -120,9 +123,15 @@ export default function App() {
           <AdminReports />
         </ProtectedRoute>
       } />
+      <Route path="/admin/knowledge-base" element={
+        <ProtectedRoute roles={['admin']}>
+          <AdminKnowledgeBase />
+        </ProtectedRoute>
+      } />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
+
