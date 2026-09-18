@@ -47,7 +47,7 @@ export const auth = {
 export const tickets = {
   list: (params = {}) => {
     const q = new URLSearchParams(params).toString();
-    return apiFetch(`/tickets?${q}`);
+    return apiFetch(`/tickets/?${q}`);
   },
   get: (id) => apiFetch(`/tickets/${id}`),
   create: (data) => apiFetch('/tickets', { method: 'POST', body: JSON.stringify(data) }),
@@ -143,6 +143,7 @@ export const helpers = {
     hour: '2-digit', minute: '2-digit',
   }),
 };
+
 
 
 
