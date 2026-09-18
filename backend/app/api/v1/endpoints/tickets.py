@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+﻿from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
@@ -95,6 +95,7 @@ def list_tickets(
     category: Optional[TicketCategory] = None,
     search: Optional[str] = None,
     assigned_to_me: bool = False,
+    client_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -108,6 +109,10 @@ def list_tickets(
     elif current_user.role == UserRole.STAFF:
         if assigned_to_me:
             query = query.filter(Ticket.assigned_to_id == current_user.id)
+
+    # Staff/admin can filter by a specific client to see that client's full ticket history
+    if client_id and current_user.role in (UserRole.STAFF, UserRole.ADMIN):
+        query = query.filter(Ticket.client_id == client_id)
 
     if status:
         query = query.filter(Ticket.status == status)

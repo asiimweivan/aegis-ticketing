@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Topbar from '../../components/layout/Topbar'
@@ -14,6 +14,7 @@ export default function StaffTicketDetail() {
   const [ticket, setTicket] = useState(null)
   const [comments, setComments] = useState([])
   const [audit, setAudit] = useState([])
+  const [clientHistory, setClientHistory] = useState([])
   const [staffList, setStaffList] = useState([])
   const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState('')
@@ -42,6 +43,11 @@ export default function StaffTicketDetail() {
         })
       }
       if (c) setComments(c)
+      if (t?.client?.id) {
+        tickets.list({ client_id: t.client.id, page_size: 50 })
+          .then(res => setClientHistory((res?.tickets || []).filter(other => other.id !== t.id)))
+          .catch(() => setClientHistory([]))
+      }
       if (a) setAudit(a)
       if (s) setStaffList(s)
     } catch (e) {
@@ -114,7 +120,7 @@ export default function StaffTicketDetail() {
   if (loading) return (
     <DashboardLayout>
       <div style={{ textAlign: 'center', padding: '4rem', color: '#8B9BB4' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏳</div>
+        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>â³</div>
         Loading ticket...
       </div>
     </DashboardLayout>
@@ -123,7 +129,7 @@ export default function StaffTicketDetail() {
   if (!ticket) return (
     <DashboardLayout>
       <div style={{ textAlign: 'center', padding: '4rem', color: '#8B9BB4' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>❌</div>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>âŒ</div>
         Ticket not found. <Link to="/staff/tickets" style={{ color: '#818CF8' }}>Go back</Link>
       </div>
     </DashboardLayout>
@@ -140,7 +146,7 @@ export default function StaffTicketDetail() {
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
             color: '#8B9BB4', borderRadius: 8, fontSize: '0.82rem', textDecoration: 'none',
-          }}>← Back</Link>
+          }}>â† Back</Link>
         }
       />
 
@@ -176,7 +182,7 @@ export default function StaffTicketDetail() {
                   background: 'rgba(0,201,167,0.04)',
                   borderBottom: '1px solid rgba(255,255,255,0.08)',
                 }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#00C9A7', marginBottom: '0.75rem' }}>🤖 AI Classification</div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#00C9A7', marginBottom: '0.75rem' }}>ðŸ¤– AI Classification</div>
                   {ticket.ai_summary && (
                     <p style={{ fontSize: '0.85rem', color: '#8B9BB4', lineHeight: 1.6, marginBottom: '0.75rem' }}>{ticket.ai_summary}</p>
                   )}
@@ -205,14 +211,14 @@ export default function StaffTicketDetail() {
                     background: 'rgba(0,201,167,0.08)', border: '1px solid rgba(0,201,167,0.2)',
                     borderRadius: 6, fontSize: '0.78rem', color: '#00C9A7',
                     cursor: 'pointer', fontFamily: 'Inter,sans-serif',
-                  }}>🔄 Re-run AI classification</button>
+                  }}>ðŸ”„ Re-run AI classification</button>
                 </div>
               )}
 
               {/* Comments */}
               <div style={{ padding: '1.5rem' }}>
                 <div style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif", marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  💬 Comments
+                  ðŸ’¬ Comments
                   <span style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 100, padding: '0.1rem 0.5rem', fontSize: '0.72rem', color: '#8B9BB4' }}>{comments.length}</span>
                 </div>
 
@@ -236,7 +242,7 @@ export default function StaffTicketDetail() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
                               <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{c.author.full_name}</span>
                               {c.is_internal && (
-                                <span style={{ fontSize: '0.68rem', fontWeight: 600, background: 'rgba(245,158,11,0.12)', color: '#FCD34D', padding: '0.1rem 0.4rem', borderRadius: 4 }}>🔒 Internal</span>
+                                <span style={{ fontSize: '0.68rem', fontWeight: 600, background: 'rgba(245,158,11,0.12)', color: '#FCD34D', padding: '0.1rem 0.4rem', borderRadius: 4 }}>ðŸ”’ Internal</span>
                               )}
                               <span style={{ fontSize: '0.72rem', color: '#8B9BB4' }}>{helpers.timeAgo(c.created_at)}</span>
                             </div>
@@ -259,7 +265,7 @@ export default function StaffTicketDetail() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#8B9BB4', cursor: 'pointer' }}>
                       <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} style={{ accentColor: '#F59E0B' }} />
-                      🔒 Internal note (hidden from client)
+                      ðŸ”’ Internal note (hidden from client)
                     </label>
                     <button onClick={submitComment} disabled={submitting || !comment.trim()} style={{
                       padding: '0.4rem 0.85rem', background: '#6366F1', color: '#fff',
@@ -276,37 +282,37 @@ export default function StaffTicketDetail() {
           <div>
             {/* Update form */}
             <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>⚙️ Update Ticket</div>
+              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>âš™ï¸ Update Ticket</div>
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Status</label>
                   <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={selectStyle}>
-                    <option value="open" style={{ background: '#0D1B3E' }}>🔴 Open</option>
-                    <option value="in_progress" style={{ background: '#0D1B3E' }}>🔵 In Progress</option>
-                    <option value="pending" style={{ background: '#0D1B3E' }}>🟡 Pending</option>
-                    <option value="resolved" style={{ background: '#0D1B3E' }}>🟢 Resolved</option>
-                    <option value="closed" style={{ background: '#0D1B3E' }}>⚫ Closed</option>
+                    <option value="open" style={{ background: '#0D1B3E' }}>ðŸ”´ Open</option>
+                    <option value="in_progress" style={{ background: '#0D1B3E' }}>ðŸ”µ In Progress</option>
+                    <option value="pending" style={{ background: '#0D1B3E' }}>ðŸŸ¡ Pending</option>
+                    <option value="resolved" style={{ background: '#0D1B3E' }}>ðŸŸ¢ Resolved</option>
+                    <option value="closed" style={{ background: '#0D1B3E' }}>âš« Closed</option>
                   </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Priority</label>
                   <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} style={selectStyle}>
-                    <option value="low" style={{ background: '#0D1B3E' }}>🟢 Low</option>
-                    <option value="medium" style={{ background: '#0D1B3E' }}>🟡 Medium</option>
-                    <option value="high" style={{ background: '#0D1B3E' }}>🟠 High</option>
-                    <option value="critical" style={{ background: '#0D1B3E' }}>🔴 Critical</option>
+                    <option value="low" style={{ background: '#0D1B3E' }}>ðŸŸ¢ Low</option>
+                    <option value="medium" style={{ background: '#0D1B3E' }}>ðŸŸ¡ Medium</option>
+                    <option value="high" style={{ background: '#0D1B3E' }}>ðŸŸ  High</option>
+                    <option value="critical" style={{ background: '#0D1B3E' }}>ðŸ”´ Critical</option>
                   </select>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Category</label>
                   <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={selectStyle}>
-                    <option value="technical" style={{ background: '#0D1B3E' }}>💻 Technical</option>
-                    <option value="administrative" style={{ background: '#0D1B3E' }}>📋 Administrative</option>
-                    <option value="billing" style={{ background: '#0D1B3E' }}>💳 Billing</option>
-                    <option value="infrastructure" style={{ background: '#0D1B3E' }}>🏗️ Infrastructure</option>
-                    <option value="hr" style={{ background: '#0D1B3E' }}>👥 HR</option>
-                    <option value="security" style={{ background: '#0D1B3E' }}>🔒 Security</option>
-                    <option value="general" style={{ background: '#0D1B3E' }}>📌 General</option>
+                    <option value="technical" style={{ background: '#0D1B3E' }}>ðŸ’» Technical</option>
+                    <option value="administrative" style={{ background: '#0D1B3E' }}>ðŸ“‹ Administrative</option>
+                    <option value="billing" style={{ background: '#0D1B3E' }}>ðŸ’³ Billing</option>
+                    <option value="infrastructure" style={{ background: '#0D1B3E' }}>ðŸ—ï¸ Infrastructure</option>
+                    <option value="hr" style={{ background: '#0D1B3E' }}>ðŸ‘¥ HR</option>
+                    <option value="security" style={{ background: '#0D1B3E' }}>ðŸ”’ Security</option>
+                    <option value="general" style={{ background: '#0D1B3E' }}>ðŸ“Œ General</option>
                   </select>
                 </div>
                 <div>
@@ -330,19 +336,43 @@ export default function StaffTicketDetail() {
             {/* SLA warning */}
             {ticket.sla_breached && (
               <div style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: 10, padding: '0.85rem 1rem', fontSize: '0.82rem', color: '#FB7185', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                ⚠️ SLA deadline has been breached
+                âš ï¸ SLA deadline has been breached
               </div>
             )}
 
+              {/* Client History */}
+              {clientHistory.length > 0 && (
+                <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Client History</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#8B9BB4' }}>{clientHistory.length} other ticket{clientHistory.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: 260, overflowY: 'auto' }}>
+                    {clientHistory.slice(0, 8).map(h => (
+                      <Link key={h.id} to={`/staff/tickets/${h.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', padding: '0.6rem 0.75rem', borderRadius: 8, textDecoration: 'none', color: '#F0F0FF', transition: 'background 0.15s' }}
+                        onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+                        onMouseOut={e=>e.currentTarget.style.background='transparent'}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</div>
+                          <div style={{ fontSize: '0.68rem', color: '#8B9BB4' }}>{h.ticket_number} · {h.status}</div>
+                        </div>
+                        <StatusBadge status={h.status} />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             {/* Ticket info */}
             <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>📋 Ticket Info</div>
+              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>ðŸ“‹ Ticket Info</div>
               <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {[
-                  { label: 'Submitted by', value: ticket.client?.full_name || '—' },
+                  { label: 'Submitted by', value: ticket.client?.full_name || 'â€”' },
                   { label: 'Submitted', value: helpers.formatDate(ticket.created_at) },
                   { label: 'SLA deadline', value: ticket.due_date ? helpers.formatDate(ticket.due_date) : 'Not set' },
-                  { label: 'SLA hours', value: ticket.sla_hours ? `${ticket.sla_hours}h` : '—' },
+                  { label: 'SLA hours', value: ticket.sla_hours ? `${ticket.sla_hours}h` : 'â€”' },
                   ...(ticket.resolved_at ? [{ label: 'Resolved at', value: helpers.formatDate(ticket.resolved_at) }] : []),
                 ].map(row => (
                   <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -356,17 +386,17 @@ export default function StaffTicketDetail() {
             {/* Timeline */}
             {audit.length > 0 && (
               <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>📅 Activity Timeline</div>
+                <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>ðŸ“… Activity Timeline</div>
                 <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
                   {audit.slice(0, 8).map((log, i) => (
                     <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', paddingBottom: '1rem', position: 'relative' }}>
                       {i < audit.slice(0, 8).length - 1 && (
                         <div style={{ position: 'absolute', left: 11, top: 22, bottom: 0, width: 1, background: 'rgba(255,255,255,0.08)' }} />
                       )}
-                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#818CF8', fontWeight: 700, flexShrink: 0 }}>✓</div>
+                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#818CF8', fontWeight: 700, flexShrink: 0 }}>âœ“</div>
                       <div>
                         <div style={{ fontSize: '0.8rem', fontWeight: 500 }}>{log.description || log.action}</div>
-                        <div style={{ fontSize: '0.72rem', color: '#8B9BB4', marginTop: '0.1rem' }}>{helpers.timeAgo(log.created_at)} · {log.user?.full_name || 'System'}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#8B9BB4', marginTop: '0.1rem' }}>{helpers.timeAgo(log.created_at)} Â· {log.user?.full_name || 'System'}</div>
                       </div>
                     </div>
                   ))}
@@ -379,3 +409,8 @@ export default function StaffTicketDetail() {
     </DashboardLayout>
   )
 }
+
+
+
+
+
