@@ -177,7 +177,7 @@ export default function Landing() {
       {/* ================= NAV ================= */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.35rem 6%', background: scrolled ? 'rgba(5,7,13,0.9)' : 'rgba(5,7,13,0.35)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', borderBottom: '1px solid ' + (scrolled ? 'rgba(255,255,255,0.1)' : 'transparent'), transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)', boxShadow: scrolled ? '0 8px 32px -12px rgba(0,0,0,0.5)' : 'none' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/aeg_logo.png" alt="AEG" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
+          <img src="/aeg_logo.png" alt="AEG" style={{ height: 88, width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         <div className="nav-center" style={{ display: 'flex', gap: '0.3rem', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
@@ -523,7 +523,7 @@ export default function Landing() {
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '4rem 6% 2.2rem' }}>
         <div className="footer-cols" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '3.2rem', marginBottom: '3.2rem', paddingBottom: '2.8rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <img src="/aeg_logo.png" alt="AEG" style={{ height: 42, width: 'auto', objectFit: 'contain', marginBottom: '1.1rem', display: 'block' }} />
+            <img src="/aeg_logo.png" alt="AEG" style={{ height: 66, width: 'auto', objectFit: 'contain', marginBottom: '1.1rem', display: 'block' }} />
             <p style={{ fontSize: '0.86rem', color: '#5C6478', lineHeight: 1.75, maxWidth: 270, marginBottom: '1.6rem' }}>AI-powered issue management for Adaptive Engineering Group Ltd. Classify, route, and resolve, faster.</p>
             <div style={{ display: 'flex', gap: '0.65rem' }}>
               {[['mail', 'Email'], ['phone', 'Phone'], ['globe', 'Website']].map(function (pair) {
@@ -570,3 +570,5 @@ export default function Landing() {
     </>
   )
 }
+
+

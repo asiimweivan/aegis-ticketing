@@ -79,7 +79,7 @@ export default function Login() {
       <style>{css}</style>
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 5%', background: 'rgba(5,7,13,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/aeg_logo.png" alt="AEG" style={{ height: 46, width: 'auto', objectFit: 'contain' }} />
+          <img src="/aeg_logo.png" alt="AEG" style={{ height: 82, width: 'auto', objectFit: 'contain' }} />
         </Link>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           <Link to="/" style={{ fontSize: '0.82rem', color: '#8A93A6', fontWeight: 500, padding: '0.45rem 0.85rem', borderRadius: 8, fontFamily: 'Sora,sans-serif' }}>&larr; Home</Link>
@@ -209,7 +209,7 @@ export default function Login() {
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '4rem 6% 2.2rem' }}>
         <div className="footer-cols" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '3.2rem', marginBottom: '3.2rem', paddingBottom: '2.8rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <img src="/aeg_logo.png" alt="AEG" style={{ height: 42, width: 'auto', objectFit: 'contain', marginBottom: '1.1rem', display: 'block' }} />
+            <img src="/aeg_logo.png" alt="AEG" style={{ height: 66, width: 'auto', objectFit: 'contain', marginBottom: '1.1rem', display: 'block' }} />
             <p style={{ fontSize: '0.86rem', color: '#5C6478', lineHeight: 1.75, maxWidth: 270, marginBottom: '1.6rem' }}>AI-powered issue management for Adaptive Engineering Group Ltd. Classify, route, and resolve, faster.</p>
             <div style={{ display: 'flex', gap: '0.65rem' }}>
               {[['mail', 'Email'], ['phone', 'Phone'], ['globe', 'Website']].map(function (pair) {
@@ -259,6 +259,8 @@ export default function Login() {
     </>
   )
 }
+
+
 
 
 

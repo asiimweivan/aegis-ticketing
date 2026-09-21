@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { auth } from '../services/api'
 
@@ -121,7 +121,7 @@ export default function ForgotPassword() {
         <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1, animation: 'fadeUp 0.5s ease both' }}>
 
           <Link to="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
-            <img src="/aeg_logo.png" alt="AEG" style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+            <img src="/aeg_logo.png" alt="AEG" style={{ height: 82, width: 'auto', objectFit: 'contain' }} />
           </Link>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
@@ -234,7 +234,7 @@ export default function ForgotPassword() {
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '4rem 6% 2.2rem' }}>
         <div className="footer-cols" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '3.2rem', marginBottom: '3.2rem', paddingBottom: '2.8rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
-            <img src="/aeg_logo.png" alt="AEG" style={{ height: 42, width: 'auto', objectFit: 'contain', marginBottom: '1.1rem', display: 'block' }} />
+            <img src="/aeg_logo.png" alt="AEG" style={{ height: 66, width: 'auto', objectFit: 'contain', marginBottom: '1.1rem', display: 'block' }} />
             <p style={{ fontSize: '0.86rem', color: '#5C6478', lineHeight: 1.75, maxWidth: 270, marginBottom: '1.6rem' }}>AI-powered issue management for Adaptive Engineering Group Ltd. Classify, route, and resolve, faster.</p>
             <div style={{ display: 'flex', gap: '0.65rem' }}>
               {[['mail-footer', 'Email'], ['phone-footer', 'Phone'], ['globe-footer', 'Website']].map(function (pair) {
@@ -278,3 +278,4 @@ export default function ForgotPassword() {
     </>
   )
 }
+
