@@ -20,6 +20,8 @@ function Icon({ name, size = 18, strokeWidth = 1.8 }) {
       return <svg {...common}><path d="M8 3h6l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4" /><path d="M9.5 13h5M9.5 16.5h5" /></svg>
     case 'book-open':
       return <svg {...common}><path d="M12 6.5c-2-1.5-5-2-8-1.5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5v-13c-3-.5-6 0-8 1.5Z" /><path d="M12 6.5v13" /></svg>
+    case 'settings':
+      return <svg {...common}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></svg>
     case 'log-out':
       return <svg {...common}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
     default:
@@ -33,12 +35,14 @@ const navItems = {
     { to: '/client/tickets', icon: 'ticket', label: 'My Tickets' },
     { to: '/client/new-ticket', icon: 'plus', label: 'New Ticket' },
     { to: '/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
+    { to: '/settings', icon: 'settings', label: 'Settings' },
   ],
   staff: [
     { to: '/staff', icon: 'home', label: 'Dashboard', exact: true },
     { to: '/staff/tickets', icon: 'ticket', label: 'All Tickets' },
     { to: '/staff/tickets?assigned=me', icon: 'bookmark', label: 'My Queue' },
     { to: '/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
+    { to: '/settings', icon: 'settings', label: 'Settings' },
   ],
   admin: [
     { to: '/admin', icon: 'home', label: 'Dashboard', exact: true },
@@ -47,6 +51,7 @@ const navItems = {
     { to: '/admin/analytics', icon: 'bar-chart', label: 'Analytics' },
     { to: '/admin/reports', icon: 'file-text', label: 'Reports' },
     { to: '/admin/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
+    { to: '/settings', icon: 'settings', label: 'Settings' },
   ],
 }
 

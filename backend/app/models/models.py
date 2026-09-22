@@ -1,4 +1,4 @@
-import enum
+﻿import enum
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Text, Boolean, DateTime,
@@ -65,6 +65,9 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login = Column(DateTime(timezone=True), nullable=True)
+    mfa_secret = Column(String(64), nullable=True)
+    mfa_enabled = Column(Boolean, default=False)
+    mfa_method = Column(String(10), nullable=True)
 
     submitted_tickets = relationship(
         "Ticket", foreign_keys="Ticket.client_id", back_populates="client"
@@ -191,3 +194,4 @@ class PasswordResetOTP(Base):
     expires_at = Column(DateTime(timezone=True), nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+

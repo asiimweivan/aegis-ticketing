@@ -23,6 +23,7 @@ import ClientProfile from './pages/staff/ClientProfile'
 
 // Admin
 import AdminDashboard from './pages/admin/Dashboard'
+import Settings from './pages/Settings'
 import AdminTickets from './pages/admin/Tickets'
 import AdminUsers from './pages/admin/Users'
 import AdminAnalytics from './pages/admin/Analytics'
@@ -109,6 +110,11 @@ export default function App() {
           <AdminDashboard />
         </ProtectedRoute>
       } />
+      <Route path="/settings" element={
+        <ProtectedRoute roles={['client', 'staff', 'admin']}>
+          <Settings />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/tickets" element={
         <ProtectedRoute roles={['admin']}>
           <AdminTickets />
@@ -140,4 +146,5 @@ export default function App() {
     </Routes>
   )
 }
+
 

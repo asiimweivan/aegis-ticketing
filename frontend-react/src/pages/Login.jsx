@@ -19,6 +19,7 @@ function Icon(props) {
   if (name === 'eye') return <svg {...common}><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
   if (name === 'eye-off') return <svg {...common}><path d="M3 3l18 18" /><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17.9 17.9 0 0 1-3.4 4.3" /><path d="M6.7 6.7C4 8.5 2 12 2 12s3.6 7 10 7c1.3 0 2.5-.3 3.5-.7" /><path d="M9.5 9.9a3 3 0 0 0 4.2 4.2" /></svg>
   if (name === 'check-circle') return <svg {...common}><circle cx="12" cy="12" r="9.5" /><path d="m8.3 12.3 2.4 2.4 5-5" /></svg>
+  if (name === 'shield-check') return <svg {...common}><path d="M12 3 4.5 6v6c0 4.5 3 7.5 7.5 9 4.5-1.5 7.5-4.5 7.5-9V6L12 3Z" /><path d="m9.3 12 1.9 1.9L15 10" /></svg>
   if (name === 'phone') return <svg {...common}><path d="M6.5 3.5c1 0 1.9.7 2.2 1.7l.7 2.3a2.3 2.3 0 0 1-.6 2.3l-1 1a13 13 0 0 0 5.4 5.4l1-1a2.3 2.3 0 0 1 2.3-.6l2.3.7c1 .3 1.7 1.2 1.7 2.2v1.8c0 1.3-1.1 2.4-2.5 2.2C10.7 20.4 3.6 13.3 2.5 6.5A2.4 2.4 0 0 1 4.7 4h1.8Z" /></svg>
   if (name === 'globe') return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" /></svg>
   return null
@@ -43,21 +44,49 @@ export default function Login() {
   var rememberArr = useState(true)
   var remember = rememberArr[0]
   var setRemember = rememberArr[1]
+
+  var mfaRequiredArr = useState(false)
+  var mfaRequired = mfaRequiredArr[0]
+  var setMfaRequired = mfaRequiredArr[1]
+  var mfaTokenArr = useState('')
+  var mfaToken = mfaTokenArr[0]
+  var setMfaToken = mfaTokenArr[1]
+  var mfaCodeArr = useState('')
+  var mfaCode = mfaCodeArr[0]
+  var setMfaCode = mfaCodeArr[1]
+  var mfaMethodArr = useState('')
+  var mfaMethod = mfaMethodArr[0]
+  var setMfaMethod = mfaMethodArr[1]
+  var resendMsgArr = useState('')
+  var resendMsg = resendMsgArr[0]
+  var setResendMsg = resendMsgArr[1]
+  var resendingArr = useState(false)
+  var resending = resendingArr[0]
+  var setResending = resendingArr[1]
+
   var authStore = useAuthStore()
   var login = authStore.login
   var navigate = useNavigate()
 
-  var handleSubmit = function (e) {
+  function completeLogin(data) {
+    login(data.user, data.access_token)
+    if (data.user.role === 'admin') navigate('/admin')
+    else if (data.user.role === 'staff') navigate('/staff')
+    else navigate('/client')
+  }
+
+  function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
     auth.login(email, password).then(function (data) {
-      if (data) {
-        login(data.user, data.access_token)
-        if (data.user.role === 'admin') navigate('/admin')
-        else if (data.user.role === 'staff') navigate('/staff')
-        else navigate('/client')
+      if (data && data.mfa_required) {
+        setMfaRequired(true)
+        setMfaToken(data.mfa_token)
+        setMfaMethod(data.mfa_method || 'totp')
+        return
       }
+      if (data) completeLogin(data)
     }).catch(function (err) {
       setError(err.message || 'Invalid email or password')
     }).finally(function () {
@@ -65,7 +94,31 @@ export default function Login() {
     })
   }
 
-  var css = "\n    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');\n    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n    body { background: #05070D; color: #E7E9F2; font-family: 'Inter', sans-serif; }\n    a { text-decoration: none; color: inherit; }\n    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }\n    @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }\n    @keyframes ping   { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(2.2);opacity:0} }\n    @keyframes spin   { to{transform:rotate(360deg)} }\n    .inp {\n      width:100%; padding:0.85rem 1rem 0.85rem 2.85rem;\n      background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.1);\n      border-radius:10px; color:#F1F3F8;\n      font-size:0.9rem; font-family:'Inter',sans-serif; outline:none;\n      transition:all 0.2s;\n    }\n    .inp:focus { border-color:#F97316; box-shadow:0 0 0 3px rgba(249,115,22,0.15); }\n    .inp::placeholder { color:#5C6478; }\n    .inp-pass { padding-right:3rem; }\n    .submit-btn {\n      width:100%; padding:0.95rem;\n      background:linear-gradient(135deg,#E8450A,#F97316); color:#fff;\n      font-family:'Sora',sans-serif;\n      font-size:0.95rem; font-weight:700;\n      border:none; border-radius:10px;\n      cursor:pointer; transition:all 0.2s;\n      box-shadow:0 4px 20px -4px rgba(232,69,10,0.5);\n    }\n    .submit-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 28px -4px rgba(232,69,10,0.6); }\n    .submit-btn:disabled { opacity:0.6; cursor:not-allowed; }\n    .chk { width:16px; height:16px; border-radius:5px; border:1.5px solid rgba(255,255,255,0.2); cursor:pointer; accent-color:#F97316; }\n    .eye-btn { transition: color 0.2s; }\n    @media(max-width:768px){\n      .login-left { display:none !important; }\n      .login-right { padding:2rem 1.5rem !important; }\n    }\n  "
+  function handleMfaSubmit(e) {
+    e.preventDefault()
+    setError('')
+    if (mfaCode.length !== 6) { setError('Enter the full 6-digit code'); return }
+    setLoading(true)
+    auth.mfaVerifyLogin(mfaToken, mfaCode).then(function (data) {
+      if (data) completeLogin(data)
+    }).catch(function (err) {
+      setError(err.message || 'Invalid or expired code')
+    }).finally(function () {
+      setLoading(false)
+    })
+  }
+
+  function handleResend() {
+    setResending(true)
+    setResendMsg('')
+    auth.mfaResend(mfaToken).then(function () {
+      setResendMsg('A new code has been sent to your email')
+    }).catch(function (err) {
+      setError(err.message || 'Could not resend code')
+    }).finally(function () { setResending(false) })
+  }
+
+  var css = "\n    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');\n    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n    body { background: #05070D; color: #E7E9F2; font-family: 'Inter', sans-serif; }\n    a { text-decoration: none; color: inherit; }\n    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }\n    @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }\n    @keyframes ping   { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(2.2);opacity:0} }\n    @keyframes spin   { to{transform:rotate(360deg)} }\n    .inp {\n      width:100%; padding:0.85rem 1rem 0.85rem 2.85rem;\n      background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.1);\n      border-radius:10px; color:#F1F3F8;\n      font-size:0.9rem; font-family:'Inter',sans-serif; outline:none;\n      transition:all 0.2s;\n    }\n    .inp:focus { border-color:#F97316; box-shadow:0 0 0 3px rgba(249,115,22,0.15); }\n    .inp::placeholder { color:#5C6478; }\n    .inp-pass { padding-right:3rem; }\n    .submit-btn {\n      width:100%; padding:0.95rem;\n      background:linear-gradient(135deg,#E8450A,#F97316); color:#fff;\n      font-family:'Sora',sans-serif;\n      font-size:0.95rem; font-weight:700;\n      border:none; border-radius:10px;\n      cursor:pointer; transition:all 0.2s;\n      box-shadow:0 4px 20px -4px rgba(232,69,10,0.5);\n    }\n    .submit-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 28px -4px rgba(232,69,10,0.6); }\n    .submit-btn:disabled { opacity:0.6; cursor:not-allowed; }\n    .chk { width:16px; height:16px; border-radius:5px; border:1.5px solid rgba(255,255,255,0.2); cursor:pointer; accent-color:#F97316; }\n    .eye-btn { transition: color 0.2s; }\n    .otp-box{width:48px;height:56px;text-align:center;font-size:1.4rem;font-weight:700;background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;color:#F1F3F8;outline:none;transition:all 0.2s;font-family:'JetBrains Mono',monospace}\n    .otp-box:focus{border-color:#F97316;box-shadow:0 0 0 3px rgba(249,115,22,0.15)}\n    @media(max-width:768px){\n      .login-left { display:none !important; }\n      .login-right { padding:2rem 1.5rem !important; }\n    }\n  "
 
   var features = [
     { icon: 'brain', label: 'AI classifies your ticket instantly' },
@@ -107,7 +160,7 @@ export default function Login() {
               Welcome back.<br />
               <span style={{ background: 'linear-gradient(90deg,#F97316,#E8450A)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Let's get to work.</span>
             </h2>
-            <p style={{ color: '#B0B8C8', fontSize: '0.93rem', lineHeight: 1.75, maxWidth: 400, marginBottom: '1.75rem' }}>
+            <p style={{ color: '#D6DCE8', fontSize: '0.93rem', lineHeight: 1.75, maxWidth: 400, marginBottom: '1.75rem' }}>
               Your tickets are classified, prioritized, and routed by AI - the right team gets to work before you even finish submitting.
             </p>
 
@@ -134,78 +187,142 @@ export default function Login() {
 
           <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1, animation: 'fadeUp 0.6s ease both' }}>
 
-            <div style={{ marginBottom: '2rem' }}>
-              <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '1.9rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.4rem', color: '#F1F3F8' }}>Sign in</h1>
-              <p style={{ color: '#8A93A6', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500 }}>
-                Enter your credentials to access your dashboard
-              </p>
-            </div>
-
-            {error && (
-              <div style={{ background: 'rgba(232,69,10,0.1)', border: '1.5px solid rgba(232,69,10,0.3)', color: '#FDBA74', padding: '0.85rem 1rem', borderRadius: 10, fontSize: '0.84rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <Icon name="alert" size={16} />{error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '1.1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#B0B8C8', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Email address</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#5C6478', pointerEvents: 'none', display: 'flex' }}><Icon name="mail" size={16} /></span>
-                  <input type="email" value={email} onChange={function (e) { setEmail(e.target.value) }} placeholder="you@aegis.rw" required className="inp" />
+            {!mfaRequired ? (
+              <>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '1.9rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.4rem', color: '#F1F3F8' }}>Sign in</h1>
+                  <p style={{ color: '#8A93A6', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500 }}>
+                    Enter your credentials to access your dashboard
+                  </p>
                 </div>
-              </div>
 
-              <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#B0B8C8', marginBottom: '0.5rem' }}>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#5C6478', pointerEvents: 'none', display: 'flex' }}><Icon name="lock" size={16} /></span>
-                  <input type={showPass ? 'text' : 'password'} value={password} onChange={function (e) { setPassword(e.target.value) }} placeholder="Enter your password" required className="inp inp-pass" />
-                  <button type="button" onClick={function () { setShowPass(!showPass) }} className="eye-btn" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#5C6478', cursor: 'pointer', padding: 0, display: 'flex' }}>
-                    <Icon name={showPass ? 'eye-off' : 'eye'} size={17} />
+                {error && (
+                  <div style={{ background: 'rgba(232,69,10,0.1)', border: '1.5px solid rgba(232,69,10,0.3)', color: '#FDBA74', padding: '0.85rem 1rem', borderRadius: 10, fontSize: '0.84rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <Icon name="alert" size={16} />{error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit}>
+                  <div style={{ marginBottom: '1.1rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#B0B8C8', marginBottom: '0.5rem', letterSpacing: '0.01em' }}>Email address</label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#5C6478', pointerEvents: 'none', display: 'flex' }}><Icon name="mail" size={16} /></span>
+                      <input type="email" value={email} onChange={function (e) { setEmail(e.target.value) }} placeholder="you@aegis.rw" required className="inp" />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '0.85rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#B0B8C8', marginBottom: '0.5rem' }}>Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#5C6478', pointerEvents: 'none', display: 'flex' }}><Icon name="lock" size={16} /></span>
+                      <input type={showPass ? 'text' : 'password'} value={password} onChange={function (e) { setPassword(e.target.value) }} placeholder="Enter your password" required className="inp inp-pass" />
+                      <button type="button" onClick={function () { setShowPass(!showPass) }} className="eye-btn" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#5C6478', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                        <Icon name={showPass ? 'eye-off' : 'eye'} size={17} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#B0B8C8', fontWeight: 500, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={remember} onChange={function (e) { setRemember(e.target.checked) }} className="chk" />
+                      Remember me
+                    </label>
+                    <Link to="/forgot-password" style={{ fontSize: '0.82rem', color: '#F97316', fontWeight: 600 }}>Forgot password?</Link>
+                  </div>
+
+                  <button type="submit" disabled={loading} className="submit-btn">
+                    {loading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
+                          <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.35)" strokeWidth="2" />
+                          <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        Signing in...
+                      </span>
+                    ) : 'Sign in \u2192'}
                   </button>
+                </form>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                  <span style={{ fontSize: '0.75rem', color: '#5C6478', whiteSpace: 'nowrap', fontWeight: 500 }}>New to AEGIS?</span>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#B0B8C8', fontWeight: 500, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={remember} onChange={function (e) { setRemember(e.target.checked) }} className="chk" />
-                  Remember me
-                </label>
-                <Link to="/forgot-password" style={{ fontSize: '0.82rem', color: '#F97316', fontWeight: 600 }}>Forgot password?</Link>
-              </div>
+                <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.1)', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, color: '#E7E9F2' }}>
+                  Create a client account &rarr;
+                </Link>
 
-              <button type="submit" disabled={loading} className="submit-btn">
-                {loading ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
-                      <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.35)" strokeWidth="2" />
-                      <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                    Signing in...
-                  </span>
-                ) : 'Sign in \u2192'}
-              </button>
-            </form>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem', padding: '0.75rem', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, color: '#4ADE80' }}>
+                  <Icon name="check-circle" size={15} />
+                  <span style={{ fontSize: '0.78rem', fontWeight: 500 }}>Your data is encrypted and secure</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(124,111,238,0.12)', border: '1px solid rgba(124,111,238,0.3)', color: '#B4ACF9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}><Icon name="shield-check" size={22} /></div>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '1.7rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.4rem', color: '#F1F3F8' }}>Two-factor verification</h1>
+                  <p style={{ color: '#8A93A6', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500 }}>
+                    {mfaMethod === 'email' ? 'Enter the 6-digit code we sent to your email' : 'Enter the 6-digit code from your authenticator app'}
+                  </p>
+                </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <span style={{ fontSize: '0.75rem', color: '#5C6478', whiteSpace: 'nowrap', fontWeight: 500 }}>New to AEGIS?</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-            </div>
+                {error && (
+                  <div style={{ background: 'rgba(232,69,10,0.1)', border: '1.5px solid rgba(232,69,10,0.3)', color: '#FDBA74', padding: '0.85rem 1rem', borderRadius: 10, fontSize: '0.84rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <Icon name="alert" size={16} />{error}
+                  </div>
+                )}
 
-            <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.1)', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, color: '#E7E9F2' }}>
-              Create a client account &rarr;
-            </Link>
+                <form onSubmit={handleMfaSubmit}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={function (e) { setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6)) }}
+                    placeholder="000000"
+                    autoFocus
+                    className="inp"
+                    style={{ textAlign: 'center', fontSize: '1.3rem', letterSpacing: '0.4em', fontFamily: 'JetBrains Mono,monospace', paddingLeft: '1rem', marginBottom: '1.5rem' }}
+                  />
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '1.5rem', padding: '0.75rem', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 10, color: '#4ADE80' }}>
-              <Icon name="check-circle" size={15} />
-              <span style={{ fontSize: '0.78rem', fontWeight: 500 }}>Your data is encrypted and secure</span>
-            </div>
+                  <button type="submit" disabled={loading} className="submit-btn">
+                    {loading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
+                          <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.35)" strokeWidth="2" />
+                          <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        Verifying...
+                      </span>
+                    ) : 'Verify and sign in \u2192'}
+                  </button>
+                </form>
+
+                {mfaMethod === 'email' && (
+                  <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.82rem', color: '#8A93A6' }}>
+                    {resendMsg ? (
+                      <span style={{ color: '#34D399' }}>{resendMsg}</span>
+                    ) : (
+                      <>Didn't get it?{' '}
+                        <button onClick={handleResend} disabled={resending} style={{ background: 'none', border: 'none', color: '#F97316', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem', fontFamily: 'Sora,sans-serif' }}>
+                          {resending ? 'Sending...' : 'Resend code'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <button onClick={function () { setMfaRequired(false); setMfaCode(''); setError(''); setResendMsg('') }} style={{ width: '100%', marginTop: '1rem', padding: '0.6rem', background: 'none', border: 'none', color: '#5C6478', fontSize: '0.82rem', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+                  &larr; Back to sign in
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
-      {/* ================= FOOTER ================= */}
+
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '4rem 6% 2.2rem' }}>
         <div className="footer-cols" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '3.2rem', marginBottom: '3.2rem', paddingBottom: '2.8rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
@@ -249,18 +366,8 @@ export default function Login() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ fontSize: '0.78rem', color: '#5C6478', fontWeight: 500 }}>&copy; 2026 Adaptive Engineering Group Ltd &middot; Kamembe, Rwanda &middot; All rights reserved</div>
-          <div style={{ display: 'flex', gap: '0.65rem' }}>
-            {['v1.0.0', 'AI-Powered', 'Built with AUCA'].map(function (b) {
-              return <span key={b} style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: '0.62rem', color: '#5C6478', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.22rem 0.65rem', borderRadius: 5 }}>{b}</span>
-            })}
-          </div>
         </div>
       </footer>
     </>
   )
 }
-
-
-
-
-

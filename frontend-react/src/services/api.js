@@ -32,6 +32,14 @@ export const auth = {
   // this call sends no body, the cookie goes automatically via credentials: 'include'.
   refresh: () => apiFetch('/auth/refresh', { method: 'POST' }),
   logout: () => apiFetch('/auth/logout', { method: 'POST' }),
+  mfaSetup: () => apiFetch('/auth/mfa/setup', { method: 'POST' }),
+  mfaVerifySetup: (code) => apiFetch('/auth/mfa/verify-setup', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaDisable: (code) => apiFetch('/auth/mfa/disable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaVerifyLogin: (mfa_token, code) => apiFetch('/auth/mfa/verify-login', { method: 'POST', body: JSON.stringify({ mfa_token, code }) }),
+  mfaSetupEmail: () => apiFetch('/auth/mfa/setup-email', { method: 'POST' }),
+  mfaVerifySetupEmail: (code) => apiFetch('/auth/mfa/verify-setup-email', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaRequestDisableEmailCode: () => apiFetch('/auth/mfa/request-disable-email-code', { method: 'POST' }),
+  mfaResend: (mfa_token) => apiFetch('/auth/mfa/resend', { method: 'POST', body: JSON.stringify({ mfa_token }) }),
   // -- Forgot password / reset flow (2-step OTP verification) --
   forgotPassword: (email) => apiFetch('/auth/forgot-password', {
     method: 'POST', body: JSON.stringify({ email })

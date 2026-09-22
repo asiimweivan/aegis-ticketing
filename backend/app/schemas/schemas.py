@@ -50,6 +50,8 @@ class UserOut(UserBase):
     avatar_url: Optional[str] = None
     created_at: datetime
     last_login: Optional[datetime] = None
+    mfa_enabled: bool = False
+    mfa_method: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -279,5 +281,26 @@ class KnowledgeBaseListOut(BaseModel):
     total_pages: int
 
 
+class MFARequired(BaseModel):
+    mfa_required: bool = True
+    mfa_token: str
+
+
+class MFASetupOut(BaseModel):
+    secret: str
+    qr_code: str
+    otpauth_url: str
+
+
+class MFACodeRequest(BaseModel):
+    code: str
+
+
+class MFALoginRequest(BaseModel):
+    mfa_token: str
+    code: str
+
+
 Token.model_rebuild()
+
 

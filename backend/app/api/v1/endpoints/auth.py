@@ -2,6 +2,7 @@
 import string
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -13,7 +14,7 @@ from app.schemas.schemas import (
 from app.core.security import (
     verify_password, get_password_hash,
     create_access_token, create_refresh_token, decode_token,
-    get_current_user
+    get_current_user, create_mfa_pending_token
 )
 from app.core.limiter import limiter
 from app.services.email_service import send_otp_email
@@ -73,7 +74,7 @@ def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db
     return user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 @limiter.limit("5/minute")
 def login(request: Request, response: Response, credentials: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == credentials.email).first()
@@ -87,6 +88,13 @@ def login(request: Request, response: Response, credentials: UserLogin, db: Sess
 
     user.last_login = datetime.now(timezone.utc)
     db.commit()
+
+    if user.mfa_enabled:
+        mfa_token = create_mfa_pending_token(user.id)
+        if user.mfa_method == "email":
+            from app.api.v1.endpoints.mfa import _send_email_code
+            _send_email_code(db, user)
+        return JSONResponse(content={"mfa_required": True, "mfa_token": mfa_token, "mfa_method": user.mfa_method})
 
     token_data = {"sub": str(user.id), "role": user.role.value}
     refresh = create_refresh_token(token_data)
@@ -212,3 +220,5 @@ def reset_password(request: Request, payload: ResetPasswordRequest, db: Session 
     db.commit()
 
     return MessageResponse(message="Password reset successfully")
+
+
