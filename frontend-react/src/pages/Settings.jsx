@@ -171,8 +171,8 @@ export default function Settings() {
               </p>
 
               {view === VIEWS.IDLE && !mfaEnabled && (
-                <button onClick={function () { setView(VIEWS.CHOOSE) }} className="settings-btn" style={{ background: 'linear-gradient(135deg,#6366F1,#818CF8)', color: '#fff' }}>
-                  Enable Two-Factor Authentication
+                <button onClick={startEmailSetup} disabled={loading} className="settings-btn" style={{ background: 'linear-gradient(135deg,#6366F1,#818CF8)', color: '#fff' }}>
+                  {loading ? 'Sending code...' : 'Enable Two-Factor Authentication'}
                 </button>
               )}
 
