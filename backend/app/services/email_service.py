@@ -17,7 +17,8 @@ def _send_via_smtp(host: str, port: int, msg: MIMEMultipart, to_email: str, tls_
 
 
 def send_otp_email(to_email: str, otp_code: str, recipient_name: str = ""):
-    """Send a password reset OTP code via SMTP using settings from .env"""
+    """Send a password reset OTP code via SMTP using settings from .env.
+    Returns (success: bool, error_detail: str or None)."""
 
     subject = "AEGIS - Password Reset Code"
     greeting = f"Hi {recipient_name}," if recipient_name else "Hi,"
@@ -53,27 +54,17 @@ def send_otp_email(to_email: str, otp_code: str, recipient_name: str = ""):
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html"))
 
-    # Primary path: connect using the real hostname. This works correctly on
-    # Linux (production/Render) and lets TLS certificate verification succeed
-    # normally, since the certificate is issued for smtp.gmail.com, not an IP.
     try:
         _send_via_smtp(settings.SMTP_HOST, settings.SMTP_PORT, msg, to_email, tls_hostname=settings.SMTP_HOST)
-        return True
+        return True, None
     except smtplib.SMTPAuthenticationError as e:
-        print(f"WARNING: SMTP authentication failed (check app password): {e}")
-        return False
+        return False, f"SMTP auth failed: {e}"
     except (socket.gaierror, socket.timeout, ConnectionRefusedError, OSError) as e:
-        # Fallback for the rare Windows IPv6/getaddrinfo resolution quirk seen
-        # in local dev. We still pass tls_hostname explicitly so certificate
-        # verification checks against the real domain, not the raw IP.
-        print(f"WARNING: Direct hostname connection failed ({e}), retrying via resolved IPv4...")
         try:
             host_ipv4 = socket.gethostbyname(settings.SMTP_HOST)
             _send_via_smtp(host_ipv4, settings.SMTP_PORT, msg, to_email, tls_hostname=settings.SMTP_HOST)
-            return True
+            return True, None
         except Exception as e2:
-            print(f"WARNING: Fallback IPv4 send also failed: {e2}")
-            return False
+            return False, f"Connection failed: {e}; IPv4 fallback also failed: {e2}"
     except Exception as e:
-        print(f"WARNING: Failed to send OTP email: {e}")
-        return False
+        return False, f"{type(e).__name__}: {e}"

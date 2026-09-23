@@ -168,9 +168,9 @@ def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Sessio
     db.add(otp_entry)
     db.commit()
 
-    sent = send_otp_email(payload.email, code, user.full_name)
+    sent, error_detail = send_otp_email(payload.email, code, user.full_name)
     if not sent:
-        raise HTTPException(status_code=500, detail="Could not send reset email. Please try again later.")
+        raise HTTPException(status_code=500, detail=f"Could not send reset email: {error_detail}")
 
     return MessageResponse(message="If that email exists, a reset code has been sent.")
 

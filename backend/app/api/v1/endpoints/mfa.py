@@ -41,7 +41,8 @@ def _generate_otp() -> str:
     return "".join(random.choices(string.digits, k=6))
 
 
-def _send_email_code(db: Session, user: User) -> bool:
+def _send_email_code(db: Session, user: User) -> str:
+    """Returns None on success, or an error detail string on failure."""
     db.query(PasswordResetOTP).filter(
         PasswordResetOTP.email == user.email,
         PasswordResetOTP.used == False
@@ -53,7 +54,8 @@ def _send_email_code(db: Session, user: User) -> bool:
     db.add(entry)
     db.commit()
 
-    return send_otp_email(user.email, code, user.full_name)
+    success, error_detail = send_otp_email(user.email, code, user.full_name)
+    return None if success else error_detail
 
 
 def _verify_email_code(db: Session, email: str, code: str) -> bool:
@@ -131,9 +133,9 @@ def setup_email_mfa(
     if current_user.mfa_enabled:
         raise HTTPException(400, "MFA is already enabled on this account")
 
-    sent = _send_email_code(db, current_user)
-    if not sent:
-        raise HTTPException(500, "Could not send verification email. Please try again.")
+    error = _send_email_code(db, current_user)
+    if error:
+        raise HTTPException(500, f"Could not send verification email: {error}")
 
     return MessageResponse(message="A verification code has been sent to your email")
 
@@ -188,9 +190,9 @@ def request_disable_email_code(
     if not current_user.mfa_enabled or current_user.mfa_method != "email":
         raise HTTPException(400, "Email-based MFA is not active on this account")
 
-    sent = _send_email_code(db, current_user)
-    if not sent:
-        raise HTTPException(500, "Could not send verification email")
+    error = _send_email_code(db, current_user)
+    if error:
+        raise HTTPException(500, f"Could not send verification email: {error}")
     return MessageResponse(message="A verification code has been sent to your email")
 
 
@@ -212,9 +214,9 @@ def resend_login_code(request: Request, payload: dict, db: Session = Depends(get
     if not user or user.mfa_method != "email":
         raise HTTPException(400, "Email code resend is not available for this account")
 
-    sent = _send_email_code(db, user)
-    if not sent:
-        raise HTTPException(500, "Could not resend verification email")
+    error = _send_email_code(db, user)
+    if error:
+        raise HTTPException(500, f"Could not resend verification email: {error}")
     return MessageResponse(message="A new code has been sent to your email")
 
 
@@ -247,3 +249,5 @@ def verify_login(request: Request, response: Response, payload: MFALoginRequest,
         access_token=create_access_token(token_data),
         user=user
     )
+
+
