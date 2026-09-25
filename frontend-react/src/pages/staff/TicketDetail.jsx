@@ -2,485 +2,323 @@
 import { useParams, Link } from 'react-router-dom'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Topbar from '../../components/layout/Topbar'
-import { StatusBadge, PriorityBadge } from '../../components/ui/Badge'
 import { tickets, users, helpers } from '../../services/api'
 import { useToast } from '../../components/ui/Toast'
 import useAuthStore from '../../stores/authStore'
 
-const RESPONSE_TEMPLATES = {
-  technical: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thanks for reporting this technical issue. I have reviewed ticket ' + t.ticket_number + ' and we are looking into it now.',
-    '',
-    'In the meantime, could you confirm:',
-    '- When did this start happening?',
-    '- Is it affecting one device or multiple?',
-    '- Have you tried restarting the affected system?',
-    '',
-    'We will keep you updated as we work through it.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
-  administrative: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thank you for your request (ticket ' + t.ticket_number + '). We have received it and it is now with the relevant team for processing.',
-    '',
-    'We will follow up once it has been reviewed.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
-  billing: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thanks for reaching out about ticket ' + t.ticket_number + '. We are reviewing the billing details you have provided and will get back to you shortly with an update.',
-    '',
-    'If you have any invoice numbers or transaction references handy, feel free to share them here to help us resolve this faster.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
-  infrastructure: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thanks for flagging this facilities or infrastructure issue (ticket ' + t.ticket_number + '). We have logged it and a team member will assess it shortly.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
-  hr: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thank you for reaching out regarding ticket ' + t.ticket_number + '. This has been passed to the HR team for review, and someone will follow up with you directly.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
-  security: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thanks for reporting this security concern (ticket ' + t.ticket_number + '). We are treating this with priority and reviewing it now.',
-    '',
-    'As a precaution, please avoid sharing any further sensitive details in this thread until we confirm the issue is contained.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
-  general: (t) => [
-    'Hi ' + (t.client?.full_name || 'there') + ',',
-    '',
-    'Thanks for your message (ticket ' + t.ticket_number + '). We have received it and will follow up shortly.',
-    '',
-    'Best,',
-    'AEG Support Team',
-  ].join(String.fromCharCode(10)),
+var STATUS_CONFIG = {
+  open: { color: '#F87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.3)', label: 'Open' },
+  in_progress: { color: '#B4ACF9', bg: 'rgba(124,111,238,0.1)', border: 'rgba(124,111,238,0.3)', label: 'In Progress' },
+  pending: { color: '#FBBF24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)', label: 'Pending' },
+  resolved: { color: '#34D399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.3)', label: 'Resolved' },
+  closed: { color: '#8A93A6', bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', label: 'Closed' },
+}
+var PRI_CONFIG = { critical: '#F87171', high: '#F97316', medium: '#FBBF24', low: '#34D399' }
+
+var RESPONSE_TEMPLATES = {
+  technical: 'Thank you for reporting this technical issue. Our team is investigating and will resolve it as quickly as possible. We will update you as soon as we have more information.',
+  administrative: 'Thank you for your request. We have received it and are processing it through the appropriate administrative channels. We will follow up with next steps shortly.',
+  billing: 'Thank you for reaching out regarding this billing matter. We are reviewing your account and will provide clarification or a resolution shortly.',
+  infrastructure: 'Thank you for flagging this infrastructure issue. Our team has been notified and will assess the situation on-site if needed. We will keep you updated on progress.',
+  hr: 'Thank you for your inquiry. We have forwarded this to the appropriate department and will respond with the information you need soon.',
+  security: 'Thank you for reporting this. Security matters are treated with the highest priority - our team is reviewing this immediately and will follow up shortly.',
+  general: 'Thank you for reaching out. We have received your message and will get back to you with a full response shortly.',
+}
+
+function Icon(props) {
+  var name = props.name
+  var size = props.size || 16
+  var strokeWidth = props.strokeWidth || 1.8
+  var common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (name === 'arrow-left') return <svg {...common}><path d="M19 12H5M5 12l6-6M5 12l6 6" /></svg>
+  if (name === 'clock') return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.2 2" /></svg>
+  if (name === 'cpu') return <svg {...common}><rect x="6" y="6" width="12" height="12" rx="1.5" /><rect x="9.5" y="9.5" width="5" height="5" rx="0.5" /><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3" /></svg>
+  if (name === 'user') return <svg {...common}><circle cx="12" cy="8" r="3.4" /><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5" /></svg>
+  if (name === 'send') return <svg {...common}><path d="m3 3 18 9-18 9 4-9-4-9Z" /></svg>
+  if (name === 'message-circle') return <svg {...common}><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 21l1.9-5.6A8.5 8.5 0 1 1 21 11.5Z" /></svg>
+  if (name === 'alert') return <svg {...common}><circle cx="12" cy="12" r="9.5" /><path d="M12 8v5" /><circle cx="12" cy="16.2" r="0.6" fill="currentColor" stroke="none" /></svg>
+  if (name === 'sparkles') return <svg {...common}><path d="M12 3v4M12 17v4M3 12h4M17 12h4" /><path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" /></svg>
+  if (name === 'lock') return <svg {...common}><rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5" /><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" /></svg>
+  if (name === 'ticket') return <svg {...common}><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" /></svg>
+  return null
 }
 
 export default function StaffTicketDetail() {
-  const { id } = useParams()
-  const { user } = useAuthStore()
-  const showToast = useToast()
-  const [ticket, setTicket] = useState(null)
-  const [comments, setComments] = useState([])
-  const [audit, setAudit] = useState([])
-  const [clientHistory, setClientHistory] = useState([])
-  const [staffList, setStaffList] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [comment, setComment] = useState('')
-  const [isInternal, setIsInternal] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [updating, setUpdating] = useState(false)
-  const [form, setForm] = useState({ status: '', priority: '', category: '', assigned_to_id: '' })
+  var params = useParams()
+  var id = params.id
+  var showToast = useToast()
+  var authStore = useAuthStore()
+  var currentUser = authStore.user
 
-  useEffect(() => { loadAll() }, [id])
+  var ticketArr = useState(null)
+  var ticket = ticketArr[0]
+  var setTicket = ticketArr[1]
+  var commentsArr = useState([])
+  var comments = commentsArr[0]
+  var setComments = commentsArr[1]
+  var staffListArr = useState([])
+  var staffList = staffListArr[0]
+  var setStaffList = staffListArr[1]
+  var clientHistoryArr = useState([])
+  var clientHistory = clientHistoryArr[0]
+  var setClientHistory = clientHistoryArr[1]
+  var loadingArr = useState(true)
+  var loading = loadingArr[0]
+  var setLoading = loadingArr[1]
+  var newCommentArr = useState('')
+  var newComment = newCommentArr[0]
+  var setNewComment = newCommentArr[1]
+  var isInternalArr = useState(false)
+  var isInternal = isInternalArr[0]
+  var setIsInternal = isInternalArr[1]
+  var sendingArr = useState(false)
+  var sending = sendingArr[0]
+  var setSending = sendingArr[1]
+  var updatingArr = useState(false)
+  var updating = updatingArr[0]
+  var setUpdating = updatingArr[1]
 
-  const loadAll = async () => {
-    try {
-      const [t, c, a, s] = await Promise.all([
-        tickets.get(id),
-        tickets.comments(id),
-        tickets.audit(id).catch(() => []),
-        users.list({ role: 'staff' }),
-      ])
+  useEffect(function () { loadTicket() }, [id])
+
+  function loadTicket() {
+    setLoading(true)
+    Promise.all([
+      tickets.get(id),
+      tickets.comments(id).catch(function () { return [] }),
+      users.list({ role: 'staff' }).catch(function () { return [] }),
+    ]).then(function (results) {
+      var t = results[0], c = results[1], s = results[2]
       if (t) {
         setTicket(t)
-        setForm({
-          status: t.status,
-          priority: t.priority,
-          category: t.category,
-          assigned_to_id: t.assigned_to?.id || '',
-        })
+        if (t.client && t.client.id) {
+          tickets.list({ page_size: 50 }).then(function (res) {
+            var all = (res && res.tickets) || []
+            setClientHistory(all.filter(function (x) { return x.client && x.client.id === t.client.id && x.id !== t.id }).slice(0, 5))
+          }).catch(function () { })
+        }
       }
-      if (c) setComments(c)
-      if (t?.client?.id) {
-        tickets.list({ client_id: t.client.id, page_size: 50 })
-          .then(res => setClientHistory((res?.tickets || []).filter(other => other.id !== t.id)))
-          .catch(() => setClientHistory([]))
-      }
-      if (a) setAudit(a)
-      if (s) setStaffList(s)
-    } catch (e) {
-      showToast('Failed to load ticket', 'error')
-    } finally {
-      setLoading(false)
-    }
+      setComments(Array.isArray(c) ? c : (c && c.comments) || [])
+      setStaffList(Array.isArray(s) ? s : (s && s.users) || [])
+    }).catch(function (e) { console.error(e) }).finally(function () { setLoading(false) })
   }
 
-  const updateTicket = async () => {
+  function updateField(field, value) {
     setUpdating(true)
-    try {
-      const payload = {
-        status: form.status,
-        priority: form.priority,
-        category: form.category,
-      }
-      if (form.assigned_to_id) payload.assigned_to_id = parseInt(form.assigned_to_id)
-      const updated = await tickets.update(id, payload)
-      if (updated) {
-        setTicket(updated)
-        showToast('Ticket updated successfully')
-        const a = await tickets.audit(id).catch(() => [])
-        if (a) setAudit(a)
-      }
-    } catch (e) {
-      showToast(e.message || 'Update failed', 'error')
-    } finally {
-      setUpdating(false)
-    }
+    var payload = {}
+    payload[field] = value
+    tickets.update(id, payload).then(function (updated) {
+      if (updated) setTicket(updated)
+      showToast('Ticket updated')
+    }).catch(function (err) {
+      showToast(err.message || 'Update failed', 'error')
+    }).finally(function () { setUpdating(false) })
   }
 
-  const submitComment = async () => {
-    if (!comment.trim()) return
-    setSubmitting(true)
-    try {
-      await tickets.addComment(id, { content: comment, is_internal: isInternal })
-      setComment('')
+  function handleAddComment(e) {
+    e.preventDefault()
+    if (!newComment.trim()) return
+    setSending(true)
+    tickets.addComment(id, { content: newComment.trim(), is_internal: isInternal }).then(function (c) {
+      if (c) setComments(function (prev) { return prev.concat([c]) })
+      setNewComment('')
       setIsInternal(false)
-      const c = await tickets.comments(id)
-      if (c) setComments(c)
-      showToast(isInternal ? 'Internal note added' : 'Comment sent')
-    } catch (e) {
-      showToast('Failed to send comment', 'error')
-    } finally {
-      setSubmitting(false)
-    }
+    }).catch(function (err) {
+      showToast(err.message || 'Could not post comment', 'error')
+    }).finally(function () { setSending(false) })
   }
 
-  const reclassify = async () => {
-    try {
-      const updated = await tickets.reclassify(id)
-      if (updated) {
-        setTicket(updated)
-        showToast('AI reclassification complete')
-      }
-    } catch (e) {
-      showToast('Reclassification failed', 'error')
-    }
+  function insertTemplate() {
+    if (!ticket) return
+    var template = RESPONSE_TEMPLATES[ticket.category] || RESPONSE_TEMPLATES.general
+    var clientName = (ticket.client && ticket.client.full_name) || 'there'
+    var text = 'Hi ' + clientName.split(' ')[0] + ',\n\n' + template + '\n\nRegarding ticket ' + ticket.ticket_number + '.\n\nBest regards,\nAEG Support Team'
+    setNewComment(text)
   }
 
-  const selectStyle = {
-    width: '100%', padding: '0.65rem 0.85rem',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 8, color: '#F8FAFC',
-    fontSize: '0.85rem', fontFamily: 'Inter,sans-serif', outline: 'none',
+  var css = "\n    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');\n    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }\n    @keyframes spin { to{transform:rotate(360deg)} }\n    .comment-inp:focus { border-color:#F97316 !important; box-shadow:0 0 0 3px rgba(249,115,22,0.15); }\n    .field-select { padding:0.5rem 0.75rem; background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.1); border-radius:8px; color:#F1F3F8; font-size:0.8rem; font-family:'Inter',sans-serif; outline:none; cursor:pointer; }\n    select { color-scheme: dark; }\n    select option { background:#0B0E17; color:#F1F3F8; }\n    .history-row:hover { background:rgba(255,255,255,0.04) !important; }\n    .template-btn:hover { background:rgba(124,111,238,0.18) !important; }\n  "
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <style>{css}</style>
+        <Topbar title="Loading..." />
+        <div style={{ padding: '4rem', textAlign: 'center', background: '#05070D', minHeight: '100%' }}>
+          <div style={{ width: 36, height: 36, border: '3px solid rgba(249,115,22,0.25)', borderTopColor: '#F97316', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+          <div style={{ color: '#5C6478', fontSize: '0.85rem' }}>Loading ticket...</div>
+        </div>
+      </DashboardLayout>
+    )
   }
 
-  if (loading) return (
-    <DashboardLayout>
-      <div style={{ textAlign: 'center', padding: '4rem', color: '#8B9BB4' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>â³</div>
-        Loading ticket...
-      </div>
-    </DashboardLayout>
-  )
+  if (!ticket) {
+    return (
+      <DashboardLayout>
+        <style>{css}</style>
+        <Topbar title="Not found" />
+        <div style={{ padding: '4rem', textAlign: 'center', background: '#05070D', minHeight: '100%', fontFamily: "'Inter',sans-serif" }}>
+          <Link to="/staff/tickets" style={{ color: '#F97316', fontSize: '0.85rem', fontWeight: 600 }}>&larr; Back to tickets</Link>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
-  if (!ticket) return (
-    <DashboardLayout>
-      <div style={{ textAlign: 'center', padding: '4rem', color: '#8B9BB4' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>âŒ</div>
-        Ticket not found. <Link to="/staff/tickets" style={{ color: '#818CF8' }}>Go back</Link>
-      </div>
-    </DashboardLayout>
-  )
+  var sc = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.open
+  var pc = PRI_CONFIG[ticket.priority] || '#8A93A6'
 
   return (
     <DashboardLayout>
-      <Topbar
-        title={ticket.ticket_number}
-        subtitle={ticket.title}
-        actions={
-          <Link to="/staff/tickets" style={{
-            padding: '0.55rem 1rem',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: '#8B9BB4', borderRadius: 8, fontSize: '0.82rem', textDecoration: 'none',
-          }}>â† Back</Link>
-        }
-      />
+      <style>{css}</style>
+      <Topbar title={ticket.ticket_number} subtitle={ticket.title} />
 
-      <div style={{ padding: '2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ padding: '2rem', fontFamily: "'Inter',sans-serif", background: '#05070D', minHeight: '100%', animation: 'fadeIn 0.4s ease both' }}>
+        <Link to="/staff/tickets" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#8A93A6', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', marginBottom: '1.5rem' }}>
+          <Icon name="arrow-left" size={14} /> Back to tickets
+        </Link>
 
-          {/* Left */}
-          <div>
-            <div style={{
-              background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 14, overflow: 'hidden', marginBottom: '1rem',
-            }}>
-              {/* Header */}
-              <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ fontSize: '0.78rem', color: '#8B9BB4', fontFamily: 'monospace', marginBottom: '0.5rem' }}>{ticket.ticket_number}</div>
-                <h1 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem', lineHeight: 1.3 }}>{ticket.title}</h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <StatusBadge status={ticket.status} />
-                  <PriorityBadge priority={ticket.priority} />
-                  <span style={{ fontSize: '0.78rem', color: '#8B9BB4' }}>{helpers.categoryLabel(ticket.category)}</span>
-                </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem', alignItems: 'start' }}>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: '0.72rem', color: '#5C6478', background: 'rgba(255,255,255,0.04)', padding: '0.2rem 0.6rem', borderRadius: 6 }}>{ticket.ticket_number}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', fontWeight: 600, color: sc.color, background: sc.bg, border: '1px solid ' + sc.border, padding: '0.2rem 0.65rem', borderRadius: 100 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: sc.color }} /> {sc.label}
+                </span>
               </div>
 
-              {/* Description */}
-              <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <p style={{ fontSize: '0.9rem', color: 'rgba(248,250,252,0.85)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{ticket.description}</p>
-              </div>
+              <h1 style={{ fontFamily: "'Sora',sans-serif", fontSize: '1.4rem', fontWeight: 800, color: '#F1F3F8', letterSpacing: '-0.01em', marginBottom: '1.25rem', lineHeight: 1.35 }}>{ticket.title}</h1>
+              <p style={{ fontSize: '0.9rem', color: '#B0B8C8', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{ticket.description}</p>
 
-              {/* AI section */}
-              {(ticket.ai_summary || ticket.ai_category) && (
-                <div style={{
-                  padding: '1.25rem 1.5rem',
-                  background: 'rgba(0,201,167,0.04)',
-                  borderBottom: '1px solid rgba(255,255,255,0.08)',
-                }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#00C9A7', marginBottom: '0.75rem' }}>ðŸ¤– AI Classification</div>
-                  {ticket.ai_summary && (
-                    <p style={{ fontSize: '0.85rem', color: '#8B9BB4', lineHeight: 1.6, marginBottom: '0.75rem' }}>{ticket.ai_summary}</p>
-                  )}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    {[
-                      { label: 'Category', value: helpers.categoryLabel(ticket.ai_category || ticket.category) },
-                      { label: 'Priority', value: ticket.ai_priority || ticket.priority },
-                      { label: 'Confidence', value: `${Math.round((ticket.ai_confidence || 0) * 100)}%` },
-                    ].map(item => (
-                      <div key={item.label} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '0.6rem' }}>
-                        <div style={{ fontSize: '0.68rem', color: '#8B9BB4', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.2rem' }}>{item.label}</div>
-                        <div style={{ fontSize: '0.82rem', fontWeight: 500 }}>{item.value}</div>
-                      </div>
-                    ))}
+              {ticket.ai_summary && (
+                <div style={{ marginTop: '1.5rem', background: 'rgba(124,111,238,0.08)', border: '1px solid rgba(124,111,238,0.25)', borderRadius: 12, padding: '1rem 1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#B4ACF9', display: 'flex' }}><Icon name="cpu" size={14} /></span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#B4ACF9', letterSpacing: '0.04em', textTransform: 'uppercase' }}>AI Summary</span>
                   </div>
-                  {ticket.ai_tags?.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem' }}>
-                      {ticket.ai_tags.map(tag => (
-                        <span key={tag} style={{ background: 'rgba(99,102,241,0.12)', color: '#818CF8', padding: '0.15rem 0.5rem', borderRadius: 100, fontSize: '0.72rem' }}>{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                  <button onClick={reclassify} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                    padding: '0.4rem 0.85rem',
-                    background: 'rgba(0,201,167,0.08)', border: '1px solid rgba(0,201,167,0.2)',
-                    borderRadius: 6, fontSize: '0.78rem', color: '#00C9A7',
-                    cursor: 'pointer', fontFamily: 'Inter,sans-serif',
-                  }}>ðŸ”„ Re-run AI classification</button>
+                  <p style={{ fontSize: '0.85rem', color: '#D6DCE8', lineHeight: 1.7 }}>{ticket.ai_summary}</p>
                 </div>
               )}
 
-              {/* Comments */}
-              <div style={{ padding: '1.5rem' }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif", marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  ðŸ’¬ Comments
-                  <span style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 100, padding: '0.1rem 0.5rem', fontSize: '0.72rem', color: '#8B9BB4' }}>{comments.length}</span>
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.68rem', color: '#5C6478', fontWeight: 700, marginBottom: '0.4rem', textTransform: 'uppercase' }}>Status</label>
+                  <select className="field-select" value={ticket.status} onChange={function (e) { updateField('status', e.target.value) }} disabled={updating}>
+                    {Object.keys(STATUS_CONFIG).map(function (s) { return <option key={s} value={s}>{STATUS_CONFIG[s].label}</option> })}
+                  </select>
                 </div>
-
-                {comments.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '1.5rem', color: '#8B9BB4', fontSize: '0.85rem' }}>No comments yet</div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-                    {comments.map(c => {
-                      const isOwn = c.author.id === user?.id
-                      const initials = c.author.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                      const avColor = c.author.role === 'client' ? '#00C9A7' : c.author.role === 'staff' ? '#818CF8' : '#FCD34D'
-                      const avBg = c.author.role === 'client' ? 'rgba(0,201,167,0.15)' : c.author.role === 'staff' ? 'rgba(99,102,241,0.15)' : 'rgba(245,158,11,0.15)'
-                      return (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: avBg, color: avColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>{initials}</div>
-                          <div style={{
-                            background: c.is_internal ? 'rgba(245,158,11,0.06)' : isOwn ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.04)',
-                            border: `1px solid ${c.is_internal ? 'rgba(245,158,11,0.2)' : isOwn ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.08)'}`,
-                            borderRadius: '0 12px 12px 12px', padding: '0.85rem 1rem', flex: 1,
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{c.author.full_name}</span>
-                              {c.is_internal && (
-                                <span style={{ fontSize: '0.68rem', fontWeight: 600, background: 'rgba(245,158,11,0.12)', color: '#FCD34D', padding: '0.1rem 0.4rem', borderRadius: 4 }}>ðŸ”’ Internal</span>
-                              )}
-                              <span style={{ fontSize: '0.72rem', color: '#8B9BB4' }}>{helpers.timeAgo(c.created_at)}</span>
-                            </div>
-                            <div style={{ fontSize: '0.875rem', lineHeight: 1.6 }}>{c.content}</div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Comment form */}
-                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '1rem' }}>
-                    {ticket && RESPONSE_TEMPLATES[ticket.category] && (
-                      <button
-                        type="button"
-                        onClick={() => setComment(RESPONSE_TEMPLATES[ticket.category](ticket))}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.75rem', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, color: '#A5B4FC', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', marginBottom: '0.6rem', fontFamily: 'Inter,sans-serif' }}
-                      >
-                        Insert suggested response
-                      </button>
-                    )}
-                  <textarea
-                    value={comment} onChange={e => setComment(e.target.value)}
-                    placeholder="Add a comment or internal note..."
-                    rows={3}
-                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#F8FAFC', fontSize: '0.875rem', fontFamily: 'Inter,sans-serif', resize: 'none', outline: 'none', lineHeight: 1.6, minHeight: 80 }}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: '#8B9BB4', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={isInternal} onChange={e => setIsInternal(e.target.checked)} style={{ accentColor: '#F59E0B' }} />
-                      ðŸ”’ Internal note (hidden from client)
-                    </label>
-                    <button onClick={submitComment} disabled={submitting || !comment.trim()} style={{
-                      padding: '0.4rem 0.85rem', background: '#6366F1', color: '#fff',
-                      border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
-                      opacity: submitting || !comment.trim() ? 0.6 : 1,
-                    }}>Send</button>
-                  </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.68rem', color: '#5C6478', fontWeight: 700, marginBottom: '0.4rem', textTransform: 'uppercase' }}>Priority</label>
+                  <select className="field-select" value={ticket.priority} onChange={function (e) { updateField('priority', e.target.value) }} disabled={updating}>
+                    {Object.keys(PRI_CONFIG).map(function (p) { return <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option> })}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.68rem', color: '#5C6478', fontWeight: 700, marginBottom: '0.4rem', textTransform: 'uppercase' }}>Assigned To</label>
+                  <select className="field-select" value={(ticket.assigned_to && ticket.assigned_to.id) || ''} onChange={function (e) { updateField('assigned_to_id', e.target.value ? parseInt(e.target.value, 10) : null) }} disabled={updating}>
+                    <option value="">Unassigned</option>
+                    {staffList.map(function (s) { return <option key={s.id} value={s.id}>{s.full_name}</option> })}
+                  </select>
                 </div>
               </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <span style={{ color: '#F97316', display: 'flex' }}><Icon name="message-circle" size={17} /></span>
+                <span style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.95rem', fontWeight: 700, color: '#F1F3F8' }}>Comments</span>
+                <span style={{ fontSize: '0.75rem', color: '#5C6478' }}>({comments.length})</span>
+              </div>
+
+              {comments.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#5C6478', fontSize: '0.85rem' }}>No comments yet.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                  {comments.map(function (c) {
+                    var initials = c.author && c.author.full_name ? c.author.full_name.split(' ').map(function (n) { return n[0] }).join('').toUpperCase().slice(0, 2) : '??'
+                    var isStaff = c.author && (c.author.role === 'staff' || c.author.role === 'admin')
+                    return (
+                      <div key={c.id} style={{ display: 'flex', gap: '0.85rem' }}>
+                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: isStaff ? 'rgba(124,111,238,0.15)' : 'rgba(52,211,153,0.15)', color: isStaff ? '#B4ACF9' : '#34D399', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.68rem', fontWeight: 700, flexShrink: 0 }}>{initials}</div>
+                        <div style={{ flex: 1, minWidth: 0, background: c.is_internal ? 'rgba(251,191,36,0.06)' : 'rgba(255,255,255,0.03)', border: '1px solid ' + (c.is_internal ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.06)'), borderRadius: 12, padding: '0.85rem 1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#F1F3F8' }}>{(c.author && c.author.full_name) || 'Unknown'}</span>
+                            {c.is_internal && <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#FBBF24', background: 'rgba(251,191,36,0.15)', padding: '0.1rem 0.4rem', borderRadius: 4, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Icon name="lock" size={9} /> INTERNAL</span>}
+                            <span style={{ fontSize: '0.7rem', color: '#5C6478', marginLeft: 'auto' }}>{helpers.timeAgo(c.created_at)}</span>
+                          </div>
+                          <p style={{ fontSize: '0.85rem', color: '#D6DCE8', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{c.content}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <button type="button" onClick={insertTemplate} className="template-btn" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.45rem 0.85rem', background: 'rgba(124,111,238,0.12)', border: '1px solid rgba(124,111,238,0.3)', color: '#B4ACF9', borderRadius: 100, fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter',sans-serif", transition: 'all 0.15s' }}>
+                  <Icon name="sparkles" size={12} /> Insert suggested response
+                </button>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.76rem', color: '#8A93A6', cursor: 'pointer', marginLeft: 'auto' }}>
+                  <input type="checkbox" checked={isInternal} onChange={function (e) { setIsInternal(e.target.checked) }} style={{ accentColor: '#FBBF24' }} />
+                  Internal note
+                </label>
+              </div>
+
+              <form onSubmit={handleAddComment} style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <textarea value={newComment} onChange={function (e) { setNewComment(e.target.value) }} placeholder="Add an update, response, or internal note..." rows={4} className="comment-inp"
+                  style={{ width: '100%', padding: '0.75rem 1rem', background: isInternal ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.04)', border: '1.5px solid ' + (isInternal ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.1)'), borderRadius: 10, color: '#F1F3F8', fontSize: '0.85rem', fontFamily: "'Inter',sans-serif", outline: 'none', resize: 'vertical', transition: 'all 0.2s' }}
+                />
+                <button type="submit" disabled={sending || !newComment.trim()} style={{ alignSelf: 'flex-end', padding: '0.7rem 1.4rem', background: isInternal ? 'linear-gradient(135deg,#D97706,#FBBF24)' : 'linear-gradient(135deg,#E8450A,#F97316)', color: isInternal ? '#0A0F1E' : '#fff', border: 'none', borderRadius: 10, fontSize: '0.85rem', fontWeight: 700, cursor: sending || !newComment.trim() ? 'not-allowed' : 'pointer', opacity: sending || !newComment.trim() ? 0.5 : 1, fontFamily: "'Sora',sans-serif", display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Icon name="send" size={14} /> {sending ? 'Sending...' : isInternal ? 'Add Internal Note' : 'Send Response'}
+                </button>
+              </form>
             </div>
           </div>
 
-          {/* Right */}
-          <div>
-            {/* Update form */}
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>âš™ï¸ Update Ticket</div>
-              <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '1.5rem' }}>
+              <div style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.88rem', fontWeight: 700, color: '#F1F3F8', marginBottom: '1.1rem' }}>Ticket Info</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Status</label>
-                  <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} style={selectStyle}>
-                    <option value="open" style={{ background: '#0D1B3E' }}>ðŸ”´ Open</option>
-                    <option value="in_progress" style={{ background: '#0D1B3E' }}>ðŸ”µ In Progress</option>
-                    <option value="pending" style={{ background: '#0D1B3E' }}>ðŸŸ¡ Pending</option>
-                    <option value="resolved" style={{ background: '#0D1B3E' }}>ðŸŸ¢ Resolved</option>
-                    <option value="closed" style={{ background: '#0D1B3E' }}>âš« Closed</option>
-                  </select>
+                  <div style={{ fontSize: '0.68rem', color: '#5C6478', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Category</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#D6DCE8', textTransform: 'capitalize' }}>{ticket.category}</div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Priority</label>
-                  <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} style={selectStyle}>
-                    <option value="low" style={{ background: '#0D1B3E' }}>ðŸŸ¢ Low</option>
-                    <option value="medium" style={{ background: '#0D1B3E' }}>ðŸŸ¡ Medium</option>
-                    <option value="high" style={{ background: '#0D1B3E' }}>ðŸŸ  High</option>
-                    <option value="critical" style={{ background: '#0D1B3E' }}>ðŸ”´ Critical</option>
-                  </select>
+                  <div style={{ fontSize: '0.68rem', color: '#5C6478', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Submitted by</div>
+                  {ticket.client ? (
+                    <Link to={'/staff/clients/' + ticket.client.id} style={{ fontSize: '0.85rem', fontWeight: 600, color: '#F97316', textDecoration: 'none' }}>{ticket.client.full_name}</Link>
+                  ) : <span style={{ fontSize: '0.85rem', color: '#5C6478' }}>Unknown</span>}
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Category</label>
-                  <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={selectStyle}>
-                    <option value="technical" style={{ background: '#0D1B3E' }}>ðŸ’» Technical</option>
-                    <option value="administrative" style={{ background: '#0D1B3E' }}>ðŸ“‹ Administrative</option>
-                    <option value="billing" style={{ background: '#0D1B3E' }}>ðŸ’³ Billing</option>
-                    <option value="infrastructure" style={{ background: '#0D1B3E' }}>ðŸ—ï¸ Infrastructure</option>
-                    <option value="hr" style={{ background: '#0D1B3E' }}>ðŸ‘¥ HR</option>
-                    <option value="security" style={{ background: '#0D1B3E' }}>ðŸ”’ Security</option>
-                    <option value="general" style={{ background: '#0D1B3E' }}>ðŸ“Œ General</option>
-                  </select>
+                  <div style={{ fontSize: '0.68rem', color: '#5C6478', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>Submitted</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#D6DCE8' }}>{new Date(ticket.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#8B9BB4', marginBottom: '0.4rem' }}>Assign to staff</label>
-                  <select value={form.assigned_to_id} onChange={e => setForm({ ...form, assigned_to_id: e.target.value })} style={selectStyle}>
-                    <option value="" style={{ background: '#0D1B3E' }}>Unassigned</option>
-                    {staffList.map(s => (
-                      <option key={s.id} value={s.id} style={{ background: '#0D1B3E' }}>{s.full_name}</option>
-                    ))}
-                  </select>
-                </div>
-                <button onClick={updateTicket} disabled={updating} style={{
-                  width: '100%', padding: '0.8rem', background: '#6366F1', color: '#fff',
-                  fontFamily: "'Space Grotesk',sans-serif", fontSize: '0.9rem', fontWeight: 700,
-                  border: 'none', borderRadius: 10, cursor: updating ? 'not-allowed' : 'pointer',
-                  opacity: updating ? 0.6 : 1, transition: 'all 0.2s',
-                }}>{updating ? 'Saving...' : 'Save Changes'}</button>
+                {ticket.due_date && (
+                  <div>
+                    <div style={{ fontSize: '0.68rem', color: '#5C6478', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>SLA Deadline</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: 700, color: '#FBBF24' }}><Icon name="clock" size={13} /> {new Date(ticket.due_date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* SLA warning */}
-            {ticket.sla_breached && (
-              <div style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: 10, padding: '0.85rem 1rem', fontSize: '0.82rem', color: '#FB7185', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                âš ï¸ SLA deadline has been breached
-              </div>
-            )}
-
-              {/* Client History */}
-              {clientHistory.length > 0 && (
-                <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }}>
-                  <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>Client History</span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 500, color: '#8B9BB4' }}>{clientHistory.length} other ticket{clientHistory.length !== 1 ? 's' : ''}</span>
-                  </div>
-                  <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: 260, overflowY: 'auto' }}>
-                    {clientHistory.slice(0, 8).map(h => (
-                      <Link key={h.id} to={`/staff/tickets/${h.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', padding: '0.6rem 0.75rem', borderRadius: 8, textDecoration: 'none', color: '#F0F0FF', transition: 'background 0.15s' }}
-                        onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,0.04)'}
-                        onMouseOut={e=>e.currentTarget.style.background='transparent'}
-                      >
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</div>
-                          <div style={{ fontSize: '0.68rem', color: '#8B9BB4' }}>{h.ticket_number} · {h.status}</div>
-                        </div>
-                        <StatusBadge status={h.status} />
+            {clientHistory.length > 0 && (
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
+                  <div style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.88rem', fontWeight: 700, color: '#F1F3F8' }}>Client History</div>
+                  {ticket.client && <Link to={'/staff/clients/' + ticket.client.id} style={{ fontSize: '0.7rem', color: '#F97316', fontWeight: 600, textDecoration: 'none' }}>Full profile &rarr;</Link>}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {clientHistory.map(function (t) {
+                    var s = STATUS_CONFIG[t.status] || STATUS_CONFIG.open
+                    return (
+                      <Link key={t.id} to={'/staff/tickets/' + t.id} className="history-row" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 0.6rem', borderRadius: 8, textDecoration: 'none', transition: 'background 0.15s' }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.78rem', color: '#D6DCE8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
                       </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            {/* Ticket info */}
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>ðŸ“‹ Ticket Info</div>
-              <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {[
-                  { label: 'Submitted by', value: ticket.client ? (<Link to={'/staff/clients/' + ticket.client.id} style={{ color: '#818CF8', textDecoration: 'none', fontWeight: 600 }}>{ticket.client.full_name}</Link>) : '-' },
-                  { label: 'Submitted', value: helpers.formatDate(ticket.created_at) },
-                  { label: 'SLA deadline', value: ticket.due_date ? helpers.formatDate(ticket.due_date) : 'Not set' },
-                  { label: 'SLA hours', value: ticket.sla_hours ? `${ticket.sla_hours}h` : 'â€”' },
-                  ...(ticket.resolved_at ? [{ label: 'Resolved at', value: helpers.formatDate(ticket.resolved_at) }] : []),
-                ].map(row => (
-                  <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#8B9BB4' }}>{row.label}</span>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 500, textAlign: 'right' }}>{row.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Timeline */}
-            {audit.length > 0 && (
-              <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: '0.85rem', fontWeight: 600 }}>ðŸ“… Activity Timeline</div>
-                <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
-                  {audit.slice(0, 8).map((log, i) => (
-                    <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', paddingBottom: '1rem', position: 'relative' }}>
-                      {i < audit.slice(0, 8).length - 1 && (
-                        <div style={{ position: 'absolute', left: 11, top: 22, bottom: 0, width: 1, background: 'rgba(255,255,255,0.08)' }} />
-                      )}
-                      <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#818CF8', fontWeight: 700, flexShrink: 0 }}>âœ“</div>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 500 }}>{log.description || log.action}</div>
-                        <div style={{ fontSize: '0.72rem', color: '#8B9BB4', marginTop: '0.1rem' }}>{helpers.timeAgo(log.created_at)} Â· {log.user?.full_name || 'System'}</div>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -490,9 +328,3 @@ export default function StaffTicketDetail() {
     </DashboardLayout>
   )
 }
-
-
-
-
-
-

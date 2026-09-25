@@ -1,13 +1,13 @@
 import Sidebar from './Sidebar'
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout(props) {
   return (
     <div style={{
       display: 'flex',
       minHeight: '100vh',
-      background: '#0A0F1E',
-      color: '#F8FAFC',
-      fontFamily: 'Inter, sans-serif',
+      background: '#05070D',
+      color: '#F1F3F8',
+      fontFamily: "'Inter',sans-serif",
     }}>
       <Sidebar />
       <main style={{
@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }) {
         flexDirection: 'column',
         minHeight: '100vh',
       }}>
-        {children}
+        {props.children}
       </main>
     </div>
   )

@@ -103,6 +103,7 @@ export const kb = {
   update: (id, data) => apiFetch(`/kb/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => apiFetch(`/kb/${id}`, { method: 'DELETE' }),
   markHelpful: (id) => apiFetch(`/kb/${id}/helpful`, { method: 'POST' }),
+  react: (id, reactionType) => apiFetch('/kb/' + id + '/react/' + reactionType, { method: 'POST' }),
 };
 
 export const helpers = {

@@ -131,3 +131,29 @@ def mark_helpful(article_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(article)
     return article
+
+
+REACTION_FIELDS = {
+    "helpful": "helpful_count",
+    "not_helpful": "not_helpful_count",
+    "love": "love_count",
+    "confused": "confused_count",
+}
+
+
+@router.post("/{article_id}/react/{reaction_type}", response_model=KnowledgeBaseOut)
+def react_to_article(article_id: int, reaction_type: str, db: Session = Depends(get_db)):
+    if reaction_type not in REACTION_FIELDS:
+        raise HTTPException(400, "Invalid reaction type")
+
+    article = db.query(KnowledgeBase).filter(KnowledgeBase.id == article_id).first()
+    if not article:
+        raise HTTPException(404, "Article not found")
+
+    field_name = REACTION_FIELDS[reaction_type]
+    current_value = getattr(article, field_name) or 0
+    setattr(article, field_name, current_value + 1)
+    db.commit()
+    db.refresh(article)
+    return article
+    return article

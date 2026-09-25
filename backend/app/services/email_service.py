@@ -1,8 +1,5 @@
-﻿import os
-import httpx
+﻿import httpx
 from app.core.config import settings
-
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 RESEND_API_URL = "https://api.resend.com/emails"
 
 
@@ -10,7 +7,7 @@ def send_otp_email(to_email: str, otp_code: str, recipient_name: str = ""):
     """Send a password reset / MFA OTP code via the Resend HTTP API.
     Returns (success: bool, error_detail: str or None)."""
 
-    if not RESEND_API_KEY:
+    if not settings.RESEND_API_KEY:
         return False, "RESEND_API_KEY is not configured"
 
     greeting = f"Hi {recipient_name}," if recipient_name else "Hi,"
@@ -48,7 +45,7 @@ def send_otp_email(to_email: str, otp_code: str, recipient_name: str = ""):
     }
 
     headers = {
-        "Authorization": f"Bearer {RESEND_API_KEY}",
+        "Authorization": f"Bearer {settings.RESEND_API_KEY}",
         "Content-Type": "application/json",
     }
 
@@ -59,3 +56,4 @@ def send_otp_email(to_email: str, otp_code: str, recipient_name: str = ""):
         return False, f"Resend API returned {response.status_code}: {response.text}"
     except Exception as e:
         return False, f"{type(e).__name__}: {e}"
+

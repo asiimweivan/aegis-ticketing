@@ -24,6 +24,9 @@ import ClientProfile from './pages/staff/ClientProfile'
 // Admin
 import AdminDashboard from './pages/admin/Dashboard'
 import Settings from './pages/Settings'
+import Notifications from './pages/Notifications'
+import ClientOwnProfile from './pages/client/Profile'
+import ServiceCatalog from './pages/client/ServiceCatalog'
 import AdminTickets from './pages/admin/Tickets'
 import AdminUsers from './pages/admin/Users'
 import AdminAnalytics from './pages/admin/Analytics'
@@ -115,6 +118,21 @@ export default function App() {
           <Settings />
         </ProtectedRoute>
       } />
+      <Route path="/notifications" element={
+        <ProtectedRoute roles={['client', 'staff', 'admin']}>
+          <Notifications />
+        </ProtectedRoute>
+      } />
+      <Route path="/client/profile" element={
+        <ProtectedRoute roles={['client']}>
+          <ClientOwnProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/client/services" element={
+        <ProtectedRoute roles={['client']}>
+          <ServiceCatalog />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/tickets" element={
         <ProtectedRoute roles={['admin']}>
           <AdminTickets />
@@ -146,5 +164,7 @@ export default function App() {
     </Routes>
   )
 }
+
+
 
 

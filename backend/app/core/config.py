@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+﻿from pydantic_settings import BaseSettings
 from typing import List
 import secrets
 
@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 
     # Email
     SMTP_HOST: str = "smtp.gmail.com"
+    RESEND_API_KEY: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""

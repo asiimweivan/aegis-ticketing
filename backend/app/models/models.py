@@ -181,6 +181,9 @@ class KnowledgeBase(Base):
     tags = Column(JSON, nullable=True)
     views = Column(Integer, default=0)
     helpful_count = Column(Integer, default=0)
+    not_helpful_count = Column(Integer, default=0)
+    love_count = Column(Integer, default=0)
+    confused_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -194,4 +197,5 @@ class PasswordResetOTP(Base):
     expires_at = Column(DateTime(timezone=True), nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 

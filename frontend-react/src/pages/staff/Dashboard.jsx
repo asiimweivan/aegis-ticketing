@@ -1,244 +1,135 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Topbar from '../../components/layout/Topbar'
-import StatCard from '../../components/ui/StatCard'
 import { StatusBadge, PriorityBadge } from '../../components/ui/Badge'
-import { tickets, analytics, notifications, helpers } from '../../services/api'
+import { tickets, helpers } from '../../services/api'
 import useAuthStore from '../../stores/authStore'
 
+function Icon(props) {
+  var name = props.name
+  var size = props.size || 18
+  var strokeWidth = props.strokeWidth || 1.8
+  var common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (name === 'bookmark') return <svg {...common}><path d="M6 4h12v16l-6-4-6 4Z" /></svg>
+  if (name === 'ticket') return <svg {...common}><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" /></svg>
+  if (name === 'zap') return <svg {...common}><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" /></svg>
+  if (name === 'check-circle') return <svg {...common}><circle cx="12" cy="12" r="9.5" /><path d="m8.3 12.3 2.4 2.4 5-5" /></svg>
+  if (name === 'alert-triangle') return <svg {...common}><path d="M12 3 2 20h20L12 3Z" /><path d="M12 10v4" /><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none" /></svg>
+  if (name === 'clock') return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.2 2" /></svg>
+  if (name === 'list') return <svg {...common}><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4.5" cy="6" r="0.9" fill="currentColor" stroke="none" /><circle cx="4.5" cy="12" r="0.9" fill="currentColor" stroke="none" /><circle cx="4.5" cy="18" r="0.9" fill="currentColor" stroke="none" /></svg>
+  return null
+}
+
+var PRI_COLOR = { critical: '#F87171', high: '#F97316', medium: '#FBBF24', low: '#34D399' }
+
 export default function StaffDashboard() {
-  const { user } = useAuthStore()
-  const [allTickets, setAllTickets] = useState([])
-  const [filtered, setFiltered] = useState([])
-  const [stats, setStats] = useState(null)
-  const [notifs, setNotifs] = useState([])
-  const [priorityFilter, setPriorityFilter] = useState('')
-  const [loading, setLoading] = useState(true)
+  var authStore = useAuthStore()
+  var user = authStore.user
+  var myTicketsArr = useState([])
+  var myTickets = myTicketsArr[0]
+  var setMyTickets = myTicketsArr[1]
+  var statsArr = useState({ assigned: 0, open: 0, in_progress: 0, resolved: 0, urgent: 0 })
+  var stats = statsArr[0]
+  var setStats = statsArr[1]
+  var loadingArr = useState(true)
+  var loading = loadingArr[0]
+  var setLoading = loadingArr[1]
 
-  useEffect(() => { loadData() }, [])
+  useEffect(function () { loadData() }, [])
 
-  const loadData = async () => {
-    try {
-      const [ticketData, statsData, notifData] = await Promise.all([
-        tickets.list({ page_size: 100, status: 'open' }),
-        analytics.myStats(),
-        notifications.list(),
-      ])
-      if (ticketData) {
-        setAllTickets(ticketData.tickets)
-        setFiltered(ticketData.tickets)
+  function loadData() {
+    tickets.list({ page_size: 100, assigned_to_me: true }).then(function (res) {
+      if (res) {
+        var all = res.tickets || []
+        setMyTickets(all.slice(0, 8))
+        setStats({
+          assigned: res.total || all.length,
+          open: all.filter(function (t) { return t.status === 'open' }).length,
+          in_progress: all.filter(function (t) { return t.status === 'in_progress' }).length,
+          resolved: all.filter(function (t) { return ['resolved', 'closed'].indexOf(t.status) !== -1 }).length,
+          urgent: all.filter(function (t) { return ['critical', 'high'].indexOf(t.priority) !== -1 && ['resolved', 'closed'].indexOf(t.status) === -1 }).length,
+        })
       }
-      if (statsData) setStats(statsData)
-      if (notifData) setNotifs(notifData.slice(0, 5))
-    } catch (e) { console.error(e) }
-    finally { setLoading(false) }
+    }).catch(function (e) { console.error(e) }).finally(function () { setLoading(false) })
   }
 
-  const filterByPriority = (p) => {
-    setPriorityFilter(p)
-    setFiltered(p ? allTickets.filter(t => t.priority === p) : allTickets)
-  }
+  var firstName = (user && user.full_name && user.full_name.split(' ')[0]) || 'there'
+  var hour = new Date().getHours()
+  var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  const getSLA = (t) => {
-    if (!t.due_date) return { label: 'No SLA', color: '#4ADE80' }
-    const diff = new Date(t.due_date) - Date.now()
-    const hours = diff / 3600000
-    if (diff < 0) return { label: 'Breached', color: '#FB7185' }
-    if (hours < 4) return { label: `${Math.round(hours)}h left`, color: '#FB7185' }
-    if (hours < 12) return { label: `${Math.round(hours)}h left`, color: '#FCD34D' }
-    return { label: `${Math.round(hours)}h left`, color: '#4ADE80' }
-  }
-
-  const firstName = user?.full_name?.split(' ')[0] || 'there'
+  var css = "\n    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');\n    @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }\n    @keyframes spin { to{transform:rotate(360deg)} }\n    .stat-card { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }\n    .stat-card:hover { transform: translateY(-3px); }\n    .tkt-row:hover { background: rgba(255,255,255,0.03) !important; }\n  "
 
   return (
     <DashboardLayout>
-      <Topbar
-        title="Staff Dashboard"
-        subtitle={new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        actions={
-          <Link to="/staff/tickets" style={{
-            padding: '0.55rem 1.1rem', background: '#6366F1', color: '#fff',
-            borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none',
-          }}>All tickets</Link>
-        }
-      />
+      <style>{css}</style>
+      <Topbar title="My Queue" subtitle={greeting + ', ' + firstName} />
 
-      <div style={{ padding: '2rem' }}>
-        {/* Welcome */}
-        <div style={{
-          background: 'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(0,201,167,0.06))',
-          border: '1px solid rgba(99,102,241,0.25)',
-          borderRadius: 14, padding: '1.5rem 1.75rem',
-          marginBottom: '1.5rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexWrap: 'wrap', gap: '1rem',
-        }}>
-          <div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif", marginBottom: '0.2rem' }}>
-              Welcome back, {firstName} 👋
-            </div>
-            <div style={{ fontSize: '0.82rem', color: '#8B9BB4' }}>Here's your support queue for today</div>
-          </div>
-          <Link to="/staff/tickets?assigned=me" style={{
-            padding: '0.6rem 1.25rem', background: '#6366F1', color: '#fff',
-            borderRadius: 8, fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none',
-          }}>My queue →</Link>
-        </div>
+      <div style={{ padding: '2rem', fontFamily: "'Inter',sans-serif", background: '#05070D', minHeight: '100%', animation: 'fadeIn 0.4s ease both' }}>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-          <StatCard label="Assigned to Me" value={stats?.total_assigned ?? '—'} icon="📌" color="indigo" />
-          <StatCard label="In Progress" value={stats?.in_progress ?? '—'} icon="🔄" color="teal" />
-          <StatCard label="Resolved" value={stats?.resolved ?? '—'} icon="✅" color="green" />
-          <StatCard label="Resolution Rate" value={stats ? `${stats.resolution_rate}%` : '—'} icon="📈" color="amber" />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '1.25rem' }}>
-
-          {/* Queue */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-              <h2 style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif" }}>
-                Open Ticket Queue
-              </h2>
-              <Link to="/staff/tickets" style={{ fontSize: '0.82rem', color: '#818CF8' }}>View all →</Link>
-            </div>
-
-            {/* Priority filters */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              {[
-                { v: '', l: 'All' },
-                { v: 'critical', l: '🔴 Critical' },
-                { v: 'high', l: '🟠 High' },
-                { v: 'medium', l: '🟡 Medium' },
-              ].map(f => (
-                <button key={f.v} onClick={() => filterByPriority(f.v)} style={{
-                  padding: '0.3rem 0.75rem', borderRadius: 100,
-                  fontSize: '0.74rem', fontWeight: 500, cursor: 'pointer',
-                  border: '1px solid',
-                  borderColor: priorityFilter === f.v ? 'rgba(99,102,241,0.35)' : 'rgba(255,255,255,0.08)',
-                  background: priorityFilter === f.v ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)',
-                  color: priorityFilter === f.v ? '#818CF8' : '#8B9BB4',
-                  fontFamily: 'Inter,sans-serif',
-                }}>{f.l}</button>
-              ))}
-            </div>
-
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}>
-              {/* Table header */}
-              <div style={{
-                display: 'grid', gridTemplateColumns: '105px 1fr 90px 80px 75px',
-                gap: '0.6rem', padding: '0.6rem 1rem',
-                background: 'rgba(255,255,255,0.03)',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                fontSize: '0.67rem', fontWeight: 600, color: '#8B9BB4',
-                letterSpacing: '0.05em', textTransform: 'uppercase',
-              }}>
-                <span>Ticket #</span><span>Title</span>
-                <span>Status</span><span>Priority</span><span>SLA</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: '1rem', marginBottom: '2rem' }}>
+          {[
+            { label: 'Assigned to me', value: stats.assigned, icon: 'bookmark', accent: '#7C6FEE' },
+            { label: 'Open', value: stats.open, icon: 'ticket', accent: '#F87171' },
+            { label: 'In Progress', value: stats.in_progress, icon: 'zap', accent: '#FBBF24' },
+            { label: 'Resolved', value: stats.resolved, icon: 'check-circle', accent: '#34D399' },
+            { label: 'Urgent', value: stats.urgent, icon: 'alert-triangle', accent: '#F97316' },
+          ].map(function (c) {
+            return (
+              <div key={c.label} className="stat-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '1.4rem', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: c.accent }} />
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: c.accent + '1A', color: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem' }}><Icon name={c.icon} size={18} /></div>
+                <div style={{ fontFamily: "'Sora',sans-serif", fontSize: '1.7rem', fontWeight: 800, color: '#F1F3F8', lineHeight: 1 }}>{c.value}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8A93A6', marginTop: '0.3rem', fontWeight: 600 }}>{c.label}</div>
               </div>
+            )
+          })}
+        </div>
 
-              {loading ? (
-                <div style={{ textAlign: 'center', padding: '2.5rem', color: '#8B9BB4' }}>
-                  <div style={{ fontSize: '1.75rem', marginBottom: '0.6rem' }}>⏳</div>
-                  Loading queue...
-                </div>
-              ) : filtered.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2.5rem', color: '#8B9BB4' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-                  <div style={{ fontWeight: 600, color: '#F8FAFC', marginBottom: '0.3rem' }}>Queue is clear</div>
-                  <p style={{ fontSize: '0.85rem' }}>No open tickets matching this filter.</p>
-                </div>
-              ) : (
-                filtered.slice(0, 15).map(t => {
-                  const sla = getSLA(t)
-                  return (
-                    <Link key={t.id} to={`/staff/tickets/${t.id}`} style={{
-                      display: 'grid', gridTemplateColumns: '105px 1fr 90px 80px 75px',
-                      gap: '0.6rem', alignItems: 'center',
-                      padding: '0.8rem 1rem',
-                      borderBottom: '1px solid rgba(255,255,255,0.08)',
-                      textDecoration: 'none', color: '#F8FAFC',
-                      transition: 'background 0.15s',
-                    }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#8B9BB4', fontFamily: 'monospace' }}>{t.ticket_number}</span>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 500, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
-                        <div style={{ fontSize: '0.7rem', color: '#8B9BB4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.description}</div>
-                      </div>
-                      <span><StatusBadge status={t.status} /></span>
-                      <span><PriorityBadge priority={t.priority} /></span>
-                      <span style={{ fontSize: '0.67rem', fontWeight: 600, color: sla.color }}>{sla.label}</span>
-                    </Link>
-                  )
-                })
-              )}
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
+          <div style={{ fontFamily: "'Sora',sans-serif", fontSize: '1rem', fontWeight: 700, color: '#F1F3F8' }}>My Assigned Tickets</div>
+          <Link to="/staff/tickets?assigned=me" style={{ fontSize: '0.78rem', color: '#F97316', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Icon name="list" size={14} /> View all &rarr;</Link>
+        </div>
+
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 100px 90px 100px', gap: '0.6rem', padding: '0.8rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            {['Ticket #', 'Title', 'Status', 'Priority', 'SLA'].map(function (h) {
+              return <span key={h} style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: '0.6rem', color: '#5C6478', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{h}</span>
+            })}
           </div>
 
-          {/* Right column */}
-          <div>
-            {/* Performance */}
-            <div style={{ marginBottom: '0.85rem' }}>
-              <h2 style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif" }}>My Performance</h2>
+          {loading ? (
+            <div style={{ padding: '3rem', textAlign: 'center' }}>
+              <div style={{ width: 32, height: 32, border: '3px solid rgba(249,115,22,0.25)', borderTopColor: '#F97316', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 0.75rem' }} />
+              <div style={{ color: '#5C6478', fontSize: '0.82rem' }}>Loading your queue...</div>
             </div>
-            <div style={{
-              background: '#0D1B3E', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 14, padding: '1.1rem', marginBottom: '1.25rem',
-            }}>
-              {[
-                { label: 'Total assigned', value: stats?.total_assigned ?? '—' },
-                { label: 'Resolved', value: stats?.resolved ?? '—', color: '#22C55E' },
-                { label: 'Open', value: stats?.open ?? '—', color: '#818CF8' },
-                { label: 'In progress', value: stats?.in_progress ?? '—', color: '#00C9A7' },
-                { label: 'Resolution rate', value: stats ? `${stats.resolution_rate}%` : '—', color: '#00C9A7' },
-                { label: 'Avg resolution', value: stats?.avg_resolution_hours ? `${stats.avg_resolution_hours}h` : '—' },
-              ].map(row => (
-                <div key={row.label} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '0.55rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)',
-                }}>
-                  <span style={{ fontSize: '0.75rem', color: '#8B9BB4' }}>{row.label}</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif", color: row.color || '#F8FAFC' }}>
-                    {row.value}
-                  </span>
-                </div>
-              ))}
+          ) : myTickets.length === 0 ? (
+            <div style={{ padding: '3.5rem 2rem', textAlign: 'center' }}>
+              <div style={{ color: '#3A3F52', marginBottom: '0.85rem', display: 'flex', justifyContent: 'center' }}><Icon name="bookmark" size={40} strokeWidth={1.4} /></div>
+              <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, color: '#F1F3F8', marginBottom: '0.3rem' }}>No tickets assigned yet</div>
+              <div style={{ fontSize: '0.82rem', color: '#5C6478' }}>Check the full ticket list to pick some up</div>
             </div>
-
-            {/* Notifications */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-              <h2 style={{ fontSize: '0.95rem', fontWeight: 600, fontFamily: "'Space Grotesk',sans-serif" }}>Notifications</h2>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {notifs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '1.5rem', color: '#8B9BB4', fontSize: '0.82rem' }}>No notifications</div>
-              ) : notifs.map(n => (
-                <div key={n.id} style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '0.6rem',
-                  padding: '0.7rem',
-                  background: n.is_read ? 'rgba(255,255,255,0.04)' : 'rgba(99,102,241,0.06)',
-                  border: `1px solid ${n.is_read ? 'rgba(255,255,255,0.08)' : 'rgba(99,102,241,0.2)'}`,
-                  borderRadius: 8, cursor: 'pointer',
-                }}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginTop: 6,
-                    background: n.is_read ? 'transparent' : '#6366F1',
-                    border: n.is_read ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                  }} />
-                  <div>
-                    <div style={{ fontSize: '0.78rem', lineHeight: 1.5 }}>{n.message}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#8B9BB4', marginTop: '0.15rem' }}>{helpers.timeAgo(n.created_at)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ) : myTickets.map(function (t) {
+            var pc = PRI_COLOR[t.priority] || '#8A93A6'
+            var slaLabel = '\u2014', slaColor = '#5C6478'
+            if (t.due_date && ['resolved', 'closed'].indexOf(t.status) === -1) {
+              var hours = (new Date(t.due_date) - Date.now()) / 3600000
+              if (hours < 0) { slaLabel = 'Breached'; slaColor = '#F87171' }
+              else { slaLabel = Math.round(hours) + 'h left'; slaColor = hours < 4 ? '#F87171' : hours < 12 ? '#FBBF24' : '#34D399' }
+            }
+            return (
+              <Link key={t.id} to={'/staff/tickets/' + t.id} className="tkt-row" style={{ display: 'grid', gridTemplateColumns: '110px 1fr 100px 90px 100px', gap: '0.6rem', alignItems: 'center', padding: '0.85rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textDecoration: 'none', color: '#F1F3F8' }}>
+                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: '0.68rem', color: '#5C6478' }}>{t.ticket_number}</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</span>
+                <span><StatusBadge status={t.status} /></span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: pc }} />
+                  <span style={{ fontSize: '0.72rem', color: pc, fontWeight: 600, textTransform: 'capitalize' }}>{t.priority}</span>
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono,monospace', fontSize: '0.7rem', color: slaColor, fontWeight: 600 }}>{slaLabel}</span>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </DashboardLayout>

@@ -266,6 +266,9 @@ class KnowledgeBaseOut(BaseModel):
     tags: Optional[List[str]] = None
     views: int
     helpful_count: int
+    not_helpful_count: int = 0
+    love_count: int = 0
+    confused_count: int = 0
     created_at: datetime
     updated_at: Optional[datetime] = None
 
