@@ -73,7 +73,6 @@ export default function Topbar(props) {
           >
             {initials}
           </div>
-          </div>
 
           <button
             onClick={handleLogout}
