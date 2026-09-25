@@ -91,7 +91,7 @@ export default function Sidebar(props) {
         padding: '1.25rem 1.25rem',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
-        <img src="/aeg_logo.png" alt="AEG" style={{ height: 42, width: 'auto', objectFit: 'contain' }} />
+        <img src="/aeg_logo.png" alt="AEG" style={{ height: 58, width: 'auto', objectFit: 'contain' }} />
       </div>
 
       {/* User info */}
@@ -182,6 +182,7 @@ export default function Sidebar(props) {
     </aside>
   )
 }
+
 
 
 
