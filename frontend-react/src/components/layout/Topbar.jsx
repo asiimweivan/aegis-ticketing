@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+﻿import { useNavigate } from 'react-router-dom'
 import NotificationBell from '../ui/NotificationBell'
 import useAuthStore from '../../stores/authStore'
 
@@ -60,16 +60,19 @@ export default function Topbar(props) {
         <NotificationBell theme="dark" />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{
+          <div onClick={function () { navigate('/account') }} style={{
             width: 34, height: 34, borderRadius: '50%',
             background: avatarGradient,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '0.72rem', fontWeight: 800, color: '#0A0F1E', flexShrink: 0,
-            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', transition: 'transform 0.2s',
           }}
-            title={(user && user.full_name) || 'User'}
+            title={((user && user.full_name) || 'User') + ' - View profile'}
+            onMouseOver={function (e) { e.currentTarget.style.transform = 'scale(1.08)' }}
+            onMouseOut={function (e) { e.currentTarget.style.transform = 'scale(1)' }}
           >
             {initials}
+          </div>
           </div>
 
           <button

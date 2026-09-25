@@ -128,6 +128,11 @@ export default function App() {
           <ClientOwnProfile />
         </ProtectedRoute>
       } />
+      <Route path="/account" element={
+        <ProtectedRoute roles={['client', 'staff', 'admin']}>
+          <ClientOwnProfile />
+        </ProtectedRoute>
+      } />
       <Route path="/client/services" element={
         <ProtectedRoute roles={['client']}>
           <ServiceCatalog />
