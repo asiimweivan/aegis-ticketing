@@ -27,7 +27,6 @@ var navItems = {
     { to: '/client/tickets', icon: 'ticket', label: 'My Tickets' },
     { to: '/client/new-ticket', icon: 'plus', label: 'New Ticket' },
     { to: '/client/services', icon: 'grid', label: 'Service Catalog' },
-    { to: '/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
     { to: '/client/profile', icon: 'user', label: 'My Profile' },
     { to: '/settings', icon: 'settings', label: 'Settings' },
   ],
@@ -35,7 +34,6 @@ var navItems = {
     { to: '/staff', icon: 'home', label: 'Dashboard', exact: true },
     { to: '/staff/tickets', icon: 'ticket', label: 'All Tickets' },
     { to: '/staff/tickets?assigned=me', icon: 'bookmark', label: 'My Queue' },
-    { to: '/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
     { to: '/settings', icon: 'settings', label: 'Settings' },
   ],
   admin: [
