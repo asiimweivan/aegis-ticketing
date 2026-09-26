@@ -17,7 +17,9 @@ function Icon(props) {
   if (name === 'settings') return <svg {...common}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></svg>
   if (name === 'user') return <svg {...common}><circle cx="12" cy="8" r="3.4" /><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5" /></svg>
   if (name === 'grid') return <svg {...common}><rect x="3.5" y="3.5" width="7" height="7" rx="1" /><rect x="13.5" y="3.5" width="7" height="7" rx="1" /><rect x="3.5" y="13.5" width="7" height="7" rx="1" /><rect x="13.5" y="13.5" width="7" height="7" rx="1" /></svg>
-  if (name === 'log-out') return <svg {...common}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+  if (name === 'arrow-right-circle') return <svg {...common}><circle cx="12" cy="12" r="9.5" /><path d="m10 8 4 4-4 4" /></svg>
+    if (name === 'list') return <svg {...common}><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4.5" cy="6" r="0.9" fill="currentColor" stroke="none" /><circle cx="4.5" cy="12" r="0.9" fill="currentColor" stroke="none" /><circle cx="4.5" cy="18" r="0.9" fill="currentColor" stroke="none" /></svg>
+    if (name === 'log-out') return <svg {...common}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
   return null
 }
 
@@ -40,6 +42,8 @@ var navItems = {
     { to: '/admin', icon: 'home', label: 'Dashboard', exact: true },
     { to: '/admin/tickets', icon: 'ticket', label: 'All Tickets' },
     { to: '/admin/users', icon: 'users', label: 'Users' },
+    { to: '/admin/escalations', icon: 'arrow-right-circle', label: 'Escalations' },
+    { to: '/admin/audit-trail', icon: 'list', label: 'Audit Trail' },
     { to: '/admin/analytics', icon: 'bar-chart', label: 'Analytics' },
     { to: '/admin/reports', icon: 'file-text', label: 'Reports' },
     { to: '/admin/knowledge-base', icon: 'book-open', label: 'Knowledge Base' },
@@ -182,6 +186,8 @@ export default function Sidebar(props) {
     </aside>
   )
 }
+
+
 
 
 

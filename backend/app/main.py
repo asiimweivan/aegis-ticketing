@@ -4,11 +4,24 @@ from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.api.v1.router import api_router
 from app.db.init_db import init_db, seed_admin
+from app.services.escalation_service import run_sla_escalation_check
+
+scheduler = BackgroundScheduler()
+
+
+def _scheduled_escalation_check():
+    try:
+        result = run_sla_escalation_check()
+        if result["escalated_count"] > 0:
+            print("SLA escalation: " + str(result["escalated_count"]) + " ticket(s) escalated - " + ", ".join(result["tickets"]))
+    except Exception as e:
+        print("WARNING: scheduled SLA escalation check failed: " + str(e))
 
 
 @asynccontextmanager
@@ -16,7 +29,11 @@ async def lifespan(app: FastAPI):
     print(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     init_db()
     seed_admin()
+    scheduler.add_job(_scheduled_escalation_check, "interval", minutes=5, id="sla_escalation_check")
+    scheduler.start()
+    print("SLA escalation scheduler started (checks every 5 minutes)")
     yield
+    scheduler.shutdown()
     print("Shutting down...")
 
 
@@ -34,6 +51,7 @@ Intelligent issue management platform for **Adaptive Engineering Group (A.E.G) L
 - Real-time analytics dashboard
 - Automated notifications
 - ML-based recurring issue detection
+- Automatic SLA breach escalation
     """,
     docs_url="/docs",
     redoc_url="/redoc",

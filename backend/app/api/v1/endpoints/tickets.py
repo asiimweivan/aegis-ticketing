@@ -11,7 +11,8 @@ from app.models.models import (
 )
 from app.schemas.schemas import (
     TicketCreate, TicketUpdate, TicketOut, TicketListOut,
-    CommentCreate, CommentOut, AuditLogOut, MessageResponse
+    CommentCreate, CommentOut, AuditLogOut, MessageResponse,
+    EscalateTicketRequest, EscalationOut
 )
 from app.core.security import get_current_user, require_roles
 from app.ml.classifier import classifier
@@ -319,3 +320,142 @@ def _enrich_ticket(ticket: Ticket, db: Session) -> TicketOut:
         "comment_count": comment_count,
     }
     return TicketOut(**ticket_dict)
+
+
+
+@router.post("/{ticket_id}/escalate", response_model=TicketOut)
+def escalate_ticket(
+    ticket_id: int,
+    payload: EscalateTicketRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.STAFF, UserRole.ADMIN))
+):
+    """Staff or admin hands a ticket off to a specific colleague, with a reason.
+    Distinct from automatic SLA-breach escalation - this is person-initiated."""
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(404, "Ticket not found")
+
+    target_user = db.query(User).filter(
+        User.id == payload.to_user_id,
+        User.role.in_([UserRole.STAFF, UserRole.ADMIN]),
+        User.is_active == True,
+    ).first()
+    if not target_user:
+        raise HTTPException(404, "Target staff member not found or inactive")
+
+    if target_user.id == current_user.id:
+        raise HTTPException(400, "Cannot escalate a ticket to yourself")
+
+    previous_assignee = ticket.assigned_to.full_name if ticket.assigned_to else "Unassigned"
+    ticket.assigned_to_id = target_user.id
+    db.commit()
+    db.refresh(ticket)
+
+    log_audit(
+        db, ticket.id, current_user.id, "manually_escalated",
+        current_user.full_name + " escalated this ticket from " + previous_assignee + " to " + target_user.full_name + ". Reason: " + payload.reason
+    )
+
+    create_notification(
+        db, target_user.id, NotificationType.TICKET_ESCALATED,
+        "Ticket escalated to you",
+        current_user.full_name + " escalated \"" + ticket.title + "\" to you: " + payload.reason,
+        ticket_id=ticket.id,
+    )
+
+    admins = db.query(User).filter(User.role == UserRole.ADMIN, User.is_active == True, User.id != current_user.id).all()
+    for admin in admins:
+        create_notification(
+            db, admin.id, NotificationType.TICKET_ESCALATED,
+            "Ticket manually escalated",
+            current_user.full_name + " escalated ticket " + ticket.ticket_number + " to " + target_user.full_name + ".",
+            ticket_id=ticket.id,
+        )
+
+    db.commit()
+
+    comment_count = db.query(Comment).filter(Comment.ticket_id == ticket.id).count()
+    ticket_dict = {
+        **{c.name: getattr(ticket, c.name) for c in ticket.__table__.columns},
+        "client": ticket.client,
+        "assigned_to": ticket.assigned_to,
+        "comment_count": comment_count,
+    }
+    return TicketOut(**ticket_dict)
+
+
+@router.get("/escalations/all", response_model=list[EscalationOut])
+def list_escalations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN))
+):
+    """All escalations - both automatic (SLA breach) and manual (staff handoff) -
+    for management oversight."""
+    logs = (
+        db.query(AuditLog)
+        .options(joinedload(AuditLog.user), joinedload(AuditLog.ticket))
+        .filter(AuditLog.action.in_(["sla_breach_escalated", "manually_escalated"]))
+        .order_by(AuditLog.created_at.desc())
+        .limit(200)
+        .all()
+    )
+    results = []
+    for log in logs:
+        if not log.ticket:
+            continue
+        comment_count = db.query(Comment).filter(Comment.ticket_id == log.ticket.id).count()
+        ticket_dict = {
+            **{c.name: getattr(log.ticket, c.name) for c in log.ticket.__table__.columns},
+            "client": log.ticket.client,
+            "assigned_to": log.ticket.assigned_to,
+            "comment_count": comment_count,
+        }
+        results.append(EscalationOut(
+            id=log.id,
+            action=log.action,
+            description=log.description,
+            user=log.user,
+            ticket=TicketOut(**ticket_dict),
+            created_at=log.created_at,
+        ))
+    return results
+
+
+@router.get("/audit-trail/all", response_model=list[EscalationOut])
+def list_audit_trail(
+    action: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN))
+):
+    """Full system-wide audit trail for management oversight - every logged
+    action across every ticket, optionally filtered by action type."""
+    query = (
+        db.query(AuditLog)
+        .options(joinedload(AuditLog.user), joinedload(AuditLog.ticket))
+        .filter(AuditLog.ticket_id.isnot(None))
+    )
+    if action:
+        query = query.filter(AuditLog.action == action)
+    logs = query.order_by(AuditLog.created_at.desc()).limit(300).all()
+
+    results = []
+    for log in logs:
+        if not log.ticket:
+            continue
+        comment_count = db.query(Comment).filter(Comment.ticket_id == log.ticket.id).count()
+        ticket_dict = {
+            **{c.name: getattr(log.ticket, c.name) for c in log.ticket.__table__.columns},
+            "client": log.ticket.client,
+            "assigned_to": log.ticket.assigned_to,
+            "comment_count": comment_count,
+        }
+        results.append(EscalationOut(
+            id=log.id,
+            action=log.action,
+            description=log.description,
+            user=log.user,
+            ticket=TicketOut(**ticket_dict),
+            created_at=log.created_at,
+        ))
+    return results

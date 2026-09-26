@@ -304,6 +304,24 @@ class MFALoginRequest(BaseModel):
     code: str
 
 
+class EscalateTicketRequest(BaseModel):
+    to_user_id: int
+    reason: str
+
+
+class EscalationOut(BaseModel):
+    id: int
+    action: str
+    description: Optional[str] = None
+    user: UserOut
+    ticket: TicketOut
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 Token.model_rebuild()
+
 
 

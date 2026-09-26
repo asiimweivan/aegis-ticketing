@@ -29,6 +29,8 @@ import ClientOwnProfile from './pages/client/Profile'
 import ServiceCatalog from './pages/client/ServiceCatalog'
 import AdminTickets from './pages/admin/Tickets'
 import AdminUsers from './pages/admin/Users'
+import AdminEscalations from './pages/admin/Escalations'
+import AdminAuditTrail from './pages/admin/AuditTrail'
 import AdminAnalytics from './pages/admin/Analytics'
 import AdminReports from './pages/admin/Reports'
 import AdminKnowledgeBase from './pages/admin/KnowledgeBase'
@@ -148,6 +150,16 @@ export default function App() {
           <AdminUsers />
         </ProtectedRoute>
       } />
+      <Route path="/admin/escalations" element={
+        <ProtectedRoute roles={['admin']}>
+          <AdminEscalations />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/audit-trail" element={
+        <ProtectedRoute roles={['admin']}>
+          <AdminAuditTrail />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/analytics" element={
         <ProtectedRoute roles={['admin']}>
           <AdminAnalytics />
@@ -169,6 +181,8 @@ export default function App() {
     </Routes>
   )
 }
+
+
 
 
 

@@ -66,6 +66,9 @@ export const tickets = {
     method: 'POST', body: JSON.stringify(data)
   }),
   audit: (id) => apiFetch(`/tickets/${id}/audit`),
+  escalate: (id, data) => apiFetch('/tickets/' + id + '/escalate', { method: 'POST', body: JSON.stringify(data) }),
+  escalations: () => apiFetch('/tickets/escalations/all'),
+  auditTrail: (action) => apiFetch('/tickets/audit-trail/all' + (action ? '?action=' + encodeURIComponent(action) : '')),
 };
 
 export const users = {

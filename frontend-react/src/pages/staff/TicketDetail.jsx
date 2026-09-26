@@ -39,6 +39,7 @@ function Icon(props) {
   if (name === 'alert') return <svg {...common}><circle cx="12" cy="12" r="9.5" /><path d="M12 8v5" /><circle cx="12" cy="16.2" r="0.6" fill="currentColor" stroke="none" /></svg>
   if (name === 'sparkles') return <svg {...common}><path d="M12 3v4M12 17v4M3 12h4M17 12h4" /><path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" /></svg>
   if (name === 'lock') return <svg {...common}><rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5" /><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" /></svg>
+  if (name === 'arrow-right-circle') return <svg {...common}><circle cx="12" cy="12" r="9.5" /><path d="m10 8 4 4-4 4" /></svg>
   if (name === 'ticket') return <svg {...common}><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" /></svg>
   return null
 }
@@ -77,6 +78,18 @@ export default function StaffTicketDetail() {
   var updatingArr = useState(false)
   var updating = updatingArr[0]
   var setUpdating = updatingArr[1]
+  var showEscalateArr = useState(false)
+  var showEscalate = showEscalateArr[0]
+  var setShowEscalate = showEscalateArr[1]
+  var escalateToArr = useState('')
+  var escalateTo = escalateToArr[0]
+  var setEscalateTo = escalateToArr[1]
+  var escalateReasonArr = useState('')
+  var escalateReason = escalateReasonArr[0]
+  var setEscalateReason = escalateReasonArr[1]
+  var escalatingArr = useState(false)
+  var escalating = escalatingArr[0]
+  var setEscalating = escalatingArr[1]
 
   useEffect(function () { loadTicket() }, [id])
 
@@ -112,6 +125,21 @@ export default function StaffTicketDetail() {
     }).catch(function (err) {
       showToast(err.message || 'Update failed', 'error')
     }).finally(function () { setUpdating(false) })
+  }
+
+  function handleEscalate(e) {
+    e.preventDefault()
+    if (!escalateTo || !escalateReason.trim()) return
+    setEscalating(true)
+    tickets.escalate(id, { to_user_id: parseInt(escalateTo, 10), reason: escalateReason.trim() }).then(function (updated) {
+      if (updated) setTicket(updated)
+      showToast('Ticket escalated successfully')
+      setShowEscalate(false)
+      setEscalateTo('')
+      setEscalateReason('')
+    }).catch(function (err) {
+      showToast(err.message || 'Could not escalate ticket', 'error')
+    }).finally(function () { setEscalating(false) })
   }
 
   function handleAddComment(e) {
@@ -220,8 +248,40 @@ export default function StaffTicketDetail() {
                     {staffList.map(function (s) { return <option key={s.id} value={s.id}>{s.full_name}</option> })}
                   </select>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button onClick={function () { setShowEscalate(true) }} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.85rem', background: 'rgba(248,113,113,0.1)', border: '1.5px solid rgba(248,113,113,0.3)', color: '#F87171', borderRadius: 8, fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', fontFamily: "'Sora',sans-serif" }}>
+                    <Icon name="arrow-right-circle" size={14} /> Escalate
+                  </button>
+                </div>
               </div>
             </div>
+
+            {showEscalate && (
+              <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                onClick={function (e) { if (e.target === e.currentTarget) setShowEscalate(false) }}>
+                <div style={{ background: '#0B0E17', border: '1.5px solid rgba(248,113,113,0.3)', borderRadius: 18, padding: '1.75rem', width: '100%', maxWidth: 440 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(248,113,113,0.12)', color: '#F87171', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="arrow-right-circle" size={18} /></div>
+                    <div style={{ fontFamily: "'Sora',sans-serif", fontSize: '1.05rem', fontWeight: 800, color: '#F1F3F8' }}>Escalate Ticket</div>
+                  </div>
+                  <form onSubmit={handleEscalate}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#B0B8C8', marginBottom: '0.5rem' }}>Escalate to</label>
+                    <select value={escalateTo} onChange={function (e) { setEscalateTo(e.target.value) }} required className="field-select" style={{ width: '100%', marginBottom: '1rem', padding: '0.75rem' }}>
+                      <option value="">Select a colleague...</option>
+                      {staffList.filter(function (s) { return !currentUser || s.id !== currentUser.id }).map(function (s) { return <option key={s.id} value={s.id}>{s.full_name}</option> })}
+                    </select>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#B0B8C8', marginBottom: '0.5rem' }}>Reason for escalation</label>
+                    <textarea value={escalateReason} onChange={function (e) { setEscalateReason(e.target.value) }} required rows={4} placeholder="Explain why you're escalating this ticket..." style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#F1F3F8', fontSize: '0.85rem', fontFamily: "'Inter',sans-serif", outline: 'none', resize: 'vertical', marginBottom: '1.25rem' }} />
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button type="button" onClick={function () { setShowEscalate(false) }} style={{ flex: 1, padding: '0.75rem', background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.1)', color: '#8A93A6', borderRadius: 10, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter',sans-serif" }}>Cancel</button>
+                      <button type="submit" disabled={escalating || !escalateTo || !escalateReason.trim()} style={{ flex: 1, padding: '0.75rem', background: 'linear-gradient(135deg,#DC2626,#F87171)', color: '#fff', border: 'none', borderRadius: 10, fontSize: '0.85rem', fontWeight: 700, cursor: escalating ? 'not-allowed' : 'pointer', opacity: escalating || !escalateTo || !escalateReason.trim() ? 0.6 : 1, fontFamily: "'Sora',sans-serif" }}>
+                        {escalating ? 'Escalating...' : 'Confirm Escalation'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '1.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>

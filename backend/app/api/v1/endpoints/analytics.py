@@ -185,3 +185,11 @@ def _staff_performance(db: Session) -> List[StaffPerformance]:
         ))
 
     return sorted(results, key=lambda x: x.resolved, reverse=True)[:5]
+
+@router.post("/check-sla-escalations")
+def trigger_sla_escalation_check(
+    current_user: User = Depends(require_roles(UserRole.ADMIN))
+):
+    """Manually run the SLA escalation check immediately, instead of waiting for the 5-minute scheduled job. Useful for testing and for an admin who wants an up-to-the-second check."""
+    from app.services.escalation_service import run_sla_escalation_check
+    return run_sla_escalation_check()
