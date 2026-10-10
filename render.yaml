@@ -1,10 +1,4 @@
-﻿databases:
-  - name: aegis-db
-    databaseName: aegis_ticketing
-    plan: free
-    postgresMajorVersion: 16
-
-services:
+﻿services:
   - type: web
     name: aegis-backend
     runtime: python
@@ -17,9 +11,7 @@ services:
       - key: PYTHON_VERSION
         value: "3.11.9"
       - key: DATABASE_URL
-        fromDatabase:
-          name: aegis-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
