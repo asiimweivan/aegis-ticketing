@@ -21,7 +21,7 @@
       - key: REFRESH_TOKEN_EXPIRE_DAYS
         value: "7"
       - key: ALLOWED_ORIGINS
-        value: "http://localhost:5173"
+        value: "https://aegis-ticketing-nine.vercel.app,http://localhost:5173"
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
